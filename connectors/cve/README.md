@@ -28,6 +28,7 @@ Two jobs, both run by an agent over an uplink that holds the organization's code
 | What is critical, and in what? | `cves/*/critical/**` | `SELECT id, type, vendor, product FROM cve_vulnerabilities WHERE severity = 'critical'` |
 | What is in libraries, or in one vendor's software? | `cves/*/*/libraries/**`, `cves/*/*/*/apache/**` | `SELECT * FROM cve_vulnerabilities WHERE type = 'libraries'` |
 | What is being exploited? | `overview.md` | `SELECT * FROM cve_known_exploited` |
+| Which have a public exploit, though nobody is seen using it yet? | | `SELECT id, vendor, product FROM cve_vulnerabilities WHERE exploitation = 'poc' AND automatable = 'yes'` |
 | How likely is it to be exploited? | `scores/epss.csv` | `SELECT * FROM cve_epss('cve://recent/') WHERE cve = 'CVE-2026-59822'` |
 | Which of our dependencies has an advisory? | | `SELECT * FROM cve_dependency_findings('file:///**')` |
 | Does this package version have one? | | `SELECT cve_affects('NuGet', 'Newtonsoft.Json', '12.0.1')` |
@@ -77,7 +78,9 @@ Each entry's kind is its abstraction, `weakness.pillar`, `weakness.class`, `weak
 ## Why these sources
 
 - **NVD's CVE API** holds every CVE, and lists them by the window they were published or modified in, 200 to a page. That fits a connector: a JSON response holds at most 4 MiB, and a connector cannot open the CVE List's zip archives.
-- **CISA's known-exploited list** comes inside NVD's records, as `cisaExploitAdd`, so it needs no request of its own.
+- **CISA's known-exploited list** comes inside NVD's records, as `cisaExploitAdd`, so it needs no request of its own. So does **CISA's SSVC decision**, which says whether an exploit is public, among the metrics as `ssvcV203`.
+- **NVD's CPE configurations** name the products of a record whose numbering authority named none, as most from before 2016 do. NVD alone holds them: the CVE List itself names no product for such a record.
+- **Not the public GitHub mirrors.** The CVE List (`CVEProject/cvelistV5`) is authoritative and current within minutes, but holds no CPEs, its change log is a single file of 37 MB, and its archive a zip. CISA's `vulnrichment` and the GitHub Advisory Database add nothing NVD's records and OSV do not already carry.
 - **FIRST's EPSS** is the only public estimate of how likely a CVE is to be exploited.
 - **OSV** matches a package and version to advisories, which NVD's product names cannot do reliably. It is asked live, only when a query calls `cve_affects`.
 - **MITRE's CWE API** answers in JSON, where the CWE list's own download is a zip.

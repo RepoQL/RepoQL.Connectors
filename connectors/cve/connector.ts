@@ -74,6 +74,9 @@ const CWE_EXTENDED_KEPT = 800;
 // The shape of a weakness row. Raise it when readWeakness keeps something new, and the next pass reads the list again,
 // so an import does not wait a week for its full pass to hold what the connector now renders.
 const CWE_SHAPE = 2;
+// The shape of a CVE record. Raise it when readNvd keeps something new, and the next pass lists every CVE of the scope
+// again, as a full pass would, so the import holds what the connector now renders without waiting for its full pass.
+const CVE_SHAPE = 2;
 const OSV_BATCH = 'https://api.osv.dev/v1/querybatch';
 // The most pages of 1,000 advisories cve_affects reads for one call. A function has 30 seconds.
 const OSV_PAGES = 20;
@@ -247,12 +250,19 @@ interface Cve {
   cwes: string[];
   references: Reference[];
   kev?: Kev;
+  ssvc?: Ssvc;
   // Worked out by fetch from the scores, so a count by severity is one query: see severityOf.
   severity: string;
 }
 
-// One product the numbering authority says is affected, as it wrote it.
-interface Product { vendor?: string; product?: string; package?: string; collection?: string; purl?: string; versions: string[] }
+// One product the numbering authority says is affected, as it wrote it. A record with no affected block, as most from
+// before 2016 are, names its products only in NVD's CPE configurations, and `from` is then cpe, and `part` the CPE's part:
+// a for an application, o for an operating system, h for hardware.
+interface Product { vendor?: string; product?: string; package?: string; collection?: string; purl?: string; versions: string[]; from?: 'cpe'; part?: string }
+
+// CISA's SSVC decision points for a CVE: whether it is exploited (none, poc when an exploit is public, or active), whether
+// an attacker can automate it (yes or no), and how much control it gives (partial or total).
+interface Ssvc { exploitation?: string; automatable?: string; technical_impact?: string }
 
 // One party's CVSS score. `by` is cna, cisa, nvd, or the identifier of another.
 interface Metric { by: string; version: string; vector: string; score: number }
@@ -317,6 +327,7 @@ const CONCEPTS: Concept[] = [
 const TERMS: Term[] = [
   ...TYPE_NAMES.map(name => ({ term: name, meaning: `The CVE type ${name}: ${TYPES[name].what}`, aliases: TYPES[name].aliases, scope: ['cves/**', 'types/**', 'overview.md'] }) as Term),
   { term: 'KEV', meaning: 'CISA\'s catalog of Known Exploited Vulnerabilities: a CVE in it is being exploited, and kev_added is the day CISA added it.', aliases: ['known exploited', 'exploited in the wild', 'actively exploited', 'CISA KEV'], scope: ['cves/**', 'overview.md'] },
+  { term: 'SSVC', meaning: 'CISA\'s Stakeholder-Specific Vulnerability Categorization of a CVE: exploitation is none, poc when an exploit is public, or active; automatable is yes or no; technical_impact is partial or total.', aliases: ['proof of concept', 'public exploit', 'exploit available', 'PoC', 'automatable', 'wormable'], scope: ['cves/**'] },
   { term: 'EPSS', meaning: 'FIRST\'s Exploit Prediction Scoring System: the probability that a CVE is exploited in the next 30 days, published daily, in scores/epss.csv.', aliases: ['exploit prediction', 'exploit likelihood', 'probability of exploitation'], scope: ['scores/**', 'overview.md'] },
   { term: 'CNA', meaning: 'A CVE Numbering Authority: the organization that assigned a CVE and wrote its record, whose score decides its severity here.', aliases: ['numbering authority', 'assigner', 'CVE assigner'], scope: ['cves/**'] },
 ];
@@ -357,7 +368,10 @@ export default class Cves extends Connector {
 
   private firstStep(full: boolean): Cursor {
     const now = this.clock.now();
-    const watermark = this.db.get<{ modified: string }>('state', 'watermark')?.modified;
+    // Records of an older shape are read again: every CVE of the scope is listed, though only a full pass removes any.
+    const watermark = this.db.get<{ shape?: number }>('state', 'cve')?.shape === CVE_SHAPE
+      ? this.db.get<{ modified: string }>('state', 'watermark')?.modified
+      : undefined;
     if ((full || watermark === undefined) && this.scope() === 'exploited') return { step: 'exploited', now, at: 0 };
     if (full || watermark === undefined)
       return { step: 'published', now, ...windowFrom(isoMinusDays(now, this.windowDays()), now), at: 0 };
@@ -395,6 +409,8 @@ export default class Cves extends Connector {
       return { cursor: JSON.stringify({ ...at, ...windowFrom(at.to as string, at.now), at: 0 }) };
     // A known exploited CVE may be years old, so a full pass of cve://recent lists them apart from the window.
     if (at.step === 'published') return { cursor: JSON.stringify({ step: 'exploited', now: at.now, at: 0 } satisfies Cursor) };
+    // Every CVE of the scope has now been listed in this shape, or only modified ones were, because all were already.
+    this.db.put('state', 'cve', { shape: CVE_SHAPE });
     // The CWE list changes a few times a year, so a full pass reads it, and so does any pass whose rows are of an older
     // shape, or that holds none.
     if (full || this.db.get<{ shape?: number }>('state', 'cwe')?.shape !== CWE_SHAPE) return { cursor: JSON.stringify({ step: 'cwe', phase: 'version', now: at.now, at: 0 } satisfies Cursor) };
@@ -843,12 +859,43 @@ function readNvd(item: Json): Omit<Cve, 'severity'> {
     products: productsOf(cve),
     metrics: metricsOf(cve),
     cwes: cwesOf(cve),
-    references: ((cve.references ?? []) as { url?: unknown; tags?: unknown }[])
-      .filter(reference => typeof reference.url === 'string' && /^https?:\/\//.test(reference.url as string))
-      .slice(0, KEPT_REFERENCES)
-      .map(reference => ({ url: canonicalAddress(reference.url as string), tags: Array.isArray(reference.tags) ? (reference.tags as unknown[]).filter((tag): tag is string => typeof tag === 'string') : [] })),
+    references: referencesOf(cve),
     ...(typeof cve.cisaExploitAdd === 'string' ? { kev: { added: cve.cisaExploitAdd, due: cve.cisaActionDue, action: cve.cisaRequiredAction, name: cve.cisaVulnerabilityName } } : {}),
+    ...ssvcOf(cve),
   };
+}
+
+// Each address the record cites, once. NVD lists a reference once for each party that cites it, so an older record often
+// holds the same address twice, and a reference is an edge, which an object may hold only once: two would refuse the file.
+// Two spellings of one address are one too: NVD lists a Fedora announcement both with %40 and with @, and an edge's target
+// is decoded.
+function referencesOf(cve: Record<string, any>): Reference[] {
+  const byAddress = new Map<string, { url: string; tags: Set<string> }>();
+  for (const reference of (cve.references ?? []) as { url?: unknown; tags?: unknown }[]) {
+    if (typeof reference.url !== 'string' || !/^https?:\/\//.test(reference.url)) continue;
+    const url = canonicalAddress(reference.url);
+    const key = decoded(url);
+    const entry = byAddress.get(key) ?? { url, tags: new Set<string>() };
+    if (Array.isArray(reference.tags)) for (const tag of reference.tags) if (typeof tag === 'string') entry.tags.add(tag);
+    byAddress.set(key, entry);
+  }
+  return [...byAddress.values()].slice(0, KEPT_REFERENCES).map(({ url, tags }) => ({ url, tags: [...tags] }));
+}
+
+function decoded(url: string): string {
+  try { return decodeURIComponent(url); } catch { return url; }
+}
+
+// CISA's SSVC decision, which NVD carries among the metrics. CISA decides it for almost every CVE published since 2024,
+// and for the known exploited of every age.
+function ssvcOf(cve: Record<string, any>): { ssvc?: Ssvc } {
+  const decision = ((cve.metrics?.ssvcV203 ?? []) as { source?: string; ssvcData?: { options?: Record<string, unknown>[] } }[])
+    .find(metric => metric.source === CISA_ADP)?.ssvcData;
+  if (!decision) return {};
+  const options: Record<string, unknown> = Object.assign({}, ...(decision.options ?? []));
+  const word = (value: unknown) => typeof value === 'string' && value.trim() !== '' ? value.trim().toLowerCase() : undefined;
+  const ssvc = stripped({ exploitation: word(options.exploitation), automatable: word(options.automatable), technical_impact: word(options.technicalImpact) }) as Ssvc;
+  return Object.keys(ssvc).length > 0 ? { ssvc } : {};
 }
 
 // The products the numbering authority names, from its own affected block, which NVD carries as `affected`.
@@ -861,26 +908,79 @@ function productsOf(cve: Record<string, any>): Product[] {
       products.push({
         vendor: named(data.vendor), product: named(data.product), package: named(data.packageName),
         collection: typeof data.collectionURL === 'string' ? data.collectionURL : undefined,
-        purl: typeof data.packageURL === 'string' ? data.packageURL : undefined, versions: versions.slice(0, 20),
+        purl: typeof data.packageURL === 'string' ? data.packageURL : undefined, versions: [...new Set(versions)].slice(0, 20),
       });
     }
   }
-  return products.slice(0, KEPT_PRODUCTS);
+  // A product with no name at all names nothing, as an older record's "n/a" does.
+  const namedProducts = products.filter(entry => entry.vendor || entry.product || entry.package || entry.purl);
+  return (namedProducts.length > 0 ? namedProducts : cpeProductsOf(cve)).slice(0, KEPT_PRODUCTS);
 }
 
 // One affected range in words: "1.0 up to 1.2.1.0", "before 2.3", or one version.
 function versionWords(version: Record<string, any>): string {
-  const from = typeof version.version === 'string' && version.version !== '0' && version.version !== '*' ? version.version : undefined;
-  if (typeof version.lessThan === 'string') return from ? `${from} up to ${version.lessThan}` : `before ${version.lessThan}`;
-  if (typeof version.lessThanOrEqual === 'string') return from ? `${from} through ${version.lessThanOrEqual}` : `through ${version.lessThanOrEqual}`;
-  return from ?? 'every version';
+  const from = oneLine(version.version);
+  const start = from !== undefined && from !== '0' && from !== '*' ? from : undefined;
+  const lessThan = oneLine(version.lessThan), through = oneLine(version.lessThanOrEqual);
+  if (lessThan) return start ? `${start} up to ${lessThan}` : `before ${lessThan}`;
+  if (through) return start ? `${start} through ${through}` : `through ${through}`;
+  return start ?? 'every version';
+}
+
+// The products NVD's analysts name in its CPE configurations, for a record whose numbering authority named none: each
+// vendor and product once, applications before operating systems before hardware, with its affected ranges in words.
+function cpeProductsOf(cve: Record<string, any>): Product[] {
+  const byName = new Map<string, Product>();
+  for (const configuration of (cve.configurations ?? []) as { nodes?: { cpeMatch?: Record<string, any>[] }[] }[])
+    for (const node of configuration.nodes ?? [])
+      for (const match of node.cpeMatch ?? []) {
+        if (match.vulnerable !== true || typeof match.criteria !== 'string') continue;
+        // cpe:2.3:part:vendor:product:version:update:…, where a backslash escapes a colon inside a field.
+        const fields = match.criteria.split(/(?<!\\):/).map((field: string) => field.replace(/\\(.)/g, '$1'));
+        const [part, vendor, product, version, update] = [fields[2], cpeName(fields[3]), cpeName(fields[4]), cpeValue(fields[5]), cpeValue(fields[6])];
+        if (!vendor && !product) continue;
+        const key = `${vendor}:${product}`;
+        const entry = byName.get(key) ?? { vendor, product, versions: [], from: 'cpe' as const, part };
+        const words = cpeRangeWords(match, version && update ? `${version} ${update}` : version);
+        if (!entry.versions.includes(words) && entry.versions.length < 20) entry.versions.push(words);
+        byName.set(key, entry);
+      }
+  const order = (part: string) => part === 'a' ? 0 : part === 'o' ? 1 : 2;
+  return [...byName.values()].sort((a, b) => order(a.part ?? '') - order(b.part ?? ''));
+}
+
+function cpeRangeWords(match: Record<string, any>, version: string | undefined): string {
+  const startIncluding = oneLine(match.versionStartIncluding), startExcluding = oneLine(match.versionStartExcluding);
+  const endExcluding = oneLine(match.versionEndExcluding), endIncluding = oneLine(match.versionEndIncluding);
+  const start = startIncluding ?? (startExcluding ? `after ${startExcluding}` : undefined);
+  if (endExcluding) return start ? `${start} up to ${endExcluding}` : `before ${endExcluding}`;
+  if (endIncluding) return start ? `${start} through ${endIncluding}` : `through ${endIncluding}`;
+  if (startIncluding) return `${startIncluding} and later`;
+  if (startExcluding) return `after ${startExcluding}`;
+  return version ?? 'every version';
+}
+
+// A CPE vendor or product in words: CPE writes spaces as underscores, so linux_kernel is "linux kernel".
+function cpeName(field: string | undefined): string | undefined {
+  return named(field?.replace(/_/g, ' '));
+}
+
+// A CPE version or update, or undefined for * (any) and - (none).
+function cpeValue(field: string | undefined): string | undefined {
+  return field === undefined || field === '*' || field === '-' ? undefined : oneLine(field);
 }
 
 // A name a record states, or undefined for a placeholder that names nothing.
 function named(value: unknown): string | undefined {
+  const name = oneLine(value);
+  return name === undefined || /^(n\/a|na|-|\*|unknown|unspecified)$/i.test(name) ? undefined : name;
+}
+
+// A record's text on one line: authorities write version lists across lines, and a headline or path holds no line break.
+function oneLine(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
-  const text = value.trim();
-  return text === '' || /^(n\/a|na|-|\*|unknown|unspecified)$/i.test(text) ? undefined : text;
+  const line = value.replace(/\s+/g, ' ').trim();
+  return line === '' ? undefined : line;
 }
 
 // Every party's CVSS 3.x and 4.0 score. CVSS 2.0 has no critical level, so it decides nothing here and is not kept.
@@ -927,7 +1027,7 @@ function fit(cve: Cve): Cve {
 // What the rules read of one CVE: the names its numbering authority gives, the authority, its packages, description and
 // weaknesses, and the CVSS vector that set its severity.
 function factsOf(cve: Cve): Facts {
-  const first = cve.products[0];
+  const first = leadProduct(cve);
   const purls = [...new Set(cve.products.map(entry => entry.purl).filter((purl): purl is string => purl !== undefined))];
   return {
     assigner: cve.assigner, vendor: first?.vendor, product: first?.product ?? first?.package, packages: purls,
@@ -936,7 +1036,7 @@ function factsOf(cve: Cve): Facts {
 }
 
 function stateOf(cve: Cve): Json {
-  const first = cve.products[0];
+  const first = leadProduct(cve);
   const description = cve.description.length > DESCRIPTION_SENT ? cve.description.slice(0, DESCRIPTION_SENT) : cve.description;
   const state: Record<string, Json> = { description };
   if (first?.vendor) state.vendor = first.vendor;
@@ -963,10 +1063,22 @@ function segment(name: string | undefined): string {
   return slug === '' ? 'unknown' : slug;
 }
 
+// The product a CVE is in, which names its path and which the rules read: the first its numbering authority names, or the
+// first NVD's CPEs name when the CPEs of its part, applications say, are of at most three vendors. A flaw NVD finds in the
+// applications of more vendors, as in a protocol many implement, is in none of them alone, so it has no lead product,
+// though every one is still a node. The distributions that package an application are operating systems, and count not.
+const CPE_LEAD_VENDORS = 3;
+
+function leadProduct(cve: Pick<Cve, 'products'>): Product | undefined {
+  const first = cve.products[0];
+  if (first?.from !== 'cpe') return first;
+  return new Set(cve.products.filter(entry => entry.part === first.part).map(entry => entry.vendor)).size <= CPE_LEAD_VENDORS ? first : undefined;
+}
+
 // Who makes the software and what it is called: the vendor, or the host of the package's collection; the product, or
 // the package's name.
 function vendorAndProduct(cve: Cve): [string, string] {
-  const first = cve.products[0];
+  const first = leadProduct(cve);
   let vendor = first?.vendor;
   if (!vendor && first?.collection) vendor = /^https?:\/\/([^/]+)/.exec(first.collection)?.[1];
   return [segment(vendor), segment(first?.product ?? first?.package)];
@@ -1196,7 +1308,7 @@ function flawSentence(cve: Cve): string {
 // is, in the words of its description, then where it is, how bad, and which weaknesses it is an instance of, by name.
 function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string, string>) {
   const { severity, metric } = severityOf(cve);
-  const first = cve.products[0];
+  const first = leadProduct(cve);
   const purls = [...new Set(cve.products.map(entry => entry.purl).filter((purl): purl is string => purl !== undefined))].sort();
   const fixes = cve.references.filter(reference => reference.tags.includes('Patch') || /\/commit\/[0-9a-f]{7,40}\b/i.test(reference.url));
   const rejected = cve.status === 'Rejected';
@@ -1210,6 +1322,8 @@ function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string
   if (first?.product ?? first?.package) properties.product = (first?.product ?? first?.package) as string;
   if (metric) Object.assign(properties, { cvss_score: metric.score, cvss_version: metric.version, cvss_vector: metric.vector, cvss_source: metric.by });
   if (cve.kev) Object.assign(properties, { kev_added: cve.kev.added, ...(cve.kev.due ? { kev_due: cve.kev.due } : {}) });
+  if (cve.ssvc) Object.assign(properties, cve.ssvc);
+  if (cve.products[0]?.from) properties.products_from = cve.products[0].from;
   if (label) Object.assign(properties, {
     type: label.type, type_rule: label.rule, code_execution: label.code_execution,
     ...(label.attack_vector ? { attack_vector: label.attack_vector } : {}),
@@ -1232,7 +1346,7 @@ function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string
   cve.products.forEach((entry, index) => {
     const names = [entry.vendor, entry.product ?? entry.package].filter(Boolean).join(' ') || entry.purl || 'an unnamed product';
     object = object.withChildNode(`product-${index + 1}`, 'product', `${names}${entry.versions.length > 0 ? ` — ${entry.versions.join('; ')}` : ''}`, node =>
-      node.withProperties(stripped({ vendor: entry.vendor, product: entry.product, package: entry.package, purl: entry.purl, collection: entry.collection, versions: entry.versions })));
+      node.withProperties(stripped({ vendor: entry.vendor, product: entry.product, package: entry.package, purl: entry.purl, collection: entry.collection, versions: entry.versions, from: entry.from })));
   });
   cve.metrics.forEach((entry, index) => {
     object = object.withChildNode(`score-${index + 1}`, 'score', `CVSS ${entry.version} ${entry.score} from ${scorerWords(entry.by)}`, node =>
@@ -1255,14 +1369,26 @@ function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string
     ? ['rejected by its numbering authority', `published ${cve.published.slice(0, 10)} · rejected ${cve.modified.slice(0, 10)}`]
     : [
       flawSentence(cve),
-      `${[first?.vendor, first?.product ?? first?.package].filter(Boolean).join(' ') || 'no product named'}${first?.versions.length ? ` — ${first.versions.join('; ')}` : ''}`,
-      `${severity}${metric ? ` (CVSS ${metric.version} ${metric.score} from ${scorerWords(metric.by)})` : ''} · ${label ? label.type : UNREAD}${label?.attack_vector ? ` · ${label.attack_vector} attack` : ''}${label?.code_execution ? ' · code execution' : ''}${cve.kev ? ` · known exploited since ${cve.kev.added}` : ''}`,
+      first ? `${[first.vendor, first.product ?? first.package].filter(Boolean).join(' ') || 'no product named'}${first.versions.length ? ` — ${first.versions.join('; ')}` : ''}`
+        : cve.products.length > 0 ? `${cve.products.length} products of ${new Set(cve.products.map(entry => entry.vendor)).size} vendors, in product-1 to product-${cve.products.length}` : 'no product named',
+      `${severity}${metric ? ` (CVSS ${metric.version} ${metric.score} from ${scorerWords(metric.by)})` : ''} · ${label ? label.type : UNREAD}${label?.attack_vector ? ` · ${label.attack_vector} attack` : ''}${label?.code_execution ? ' · code execution' : ''}${exploitWords(cve)}`,
       ...(cve.cwes.length > 0 ? [`weaknesses ${cve.cwes.map(cwe => weaknessNames.has(cwe) ? `${cwe} ${weaknessNames.get(cwe)}` : cwe).join('; ')}`] : []),
       ...(purls.length > 0 ? [`packages ${purls.join(', ')}`] : []),
       fixes.length > 0 ? `fix referenced, in fix-1${fixes.length > 1 ? ` to fix-${fixes.length}` : ''}` : 'no fix referenced',
       `published ${cve.published.slice(0, 10)} · modified ${cve.modified.slice(0, 10)} · ${cve.status}`,
     ];
   return object.withStructure(structure.join('\n'));
+}
+
+// What is known of its exploitation, in the words someone would search for: CISA's catalog first, then CISA's SSVC
+// decision, which says when an exploit is public before anyone is seen using it.
+function exploitWords(cve: Cve): string {
+  const words: string[] = [];
+  if (cve.kev) words.push(`known exploited since ${cve.kev.added}`);
+  else if (cve.ssvc?.exploitation === 'active') words.push('exploited, per CISA');
+  else if (cve.ssvc?.exploitation === 'poc') words.push('exploit public');
+  if (cve.ssvc?.automatable === 'yes') words.push('automatable');
+  return words.map(word => ` · ${word}`).join('');
 }
 
 function scorerWords(by: string): string {
@@ -1306,7 +1432,7 @@ function typeFile(type: string, counts: Counts): string {
     return `# Unclassified CVEs\n\n${counts.byType[UNREAD] ?? 0} CVEs neither the rules nor the model could place yet. Each moves to its type's folder once one can.\n`;
   const meaning = TYPES[type];
   return [`# ${meaning.title}`, '', meaning.what, '', `Not for: ${meaning.not_for}`, '',
-    `${counts.byType[type] ?? 0} CVEs, at \`cves/*/*/${type}/**\`. A model chose each one's type from its vendor, product and description.`, ''].join('\n');
+    `${counts.byType[type] ?? 0} CVEs, at \`cves/*/*/${type}/**\`. Rules chose each one's type from its numbering authority, vendor, product, packages and description, and a model chose it for those no rule recognised: type_rule says which.`, ''].join('\n');
 }
 
 // =====================================================================================================================
