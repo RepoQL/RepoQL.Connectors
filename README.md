@@ -30,7 +30,7 @@ Installing is a grant. rql shows what the connector asks for, such as the hosts 
 2. Change its code. Start with the block marked "Customise here" at the top of `connector.ts`.
 3. Give it your own package id in `manifest.yaml`, under `package`, and raise `package.version` on every change.
 4. Run its suites: `node suite.gen.mjs`, then `rql connector test connector.ts --fixtures suite.json`.
-5. Pack it and install it: `rql connector pack connector.ts --out .`, then `rql connector install <the .nupkg>`. To publish your own feed, use `rql connector publish`.
+5. Pack it and install it: `rql connector pack connector.ts --out .`, then `rql connector install <the .nupkg>`. To publish your own feed, use `rql connector publish`. Until rql reads the package block, stage the connector first, as [below](#until-rql-reads-the-package-block) says, and pass its identity to `rql connector pack` as `--id`, `--version` and `--authors`.
 
 ## How this repository works
 

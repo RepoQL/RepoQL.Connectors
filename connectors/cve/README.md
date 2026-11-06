@@ -101,6 +101,8 @@ rql connector test connector.ts --fixtures suite.json
 rql connector test connector.ts --fixtures suite.kev.json
 ```
 
+Until rql reads the manifest's `package` block, run the suites on a staged copy: see [the repository's README](../../README.md#until-rql-reads-the-package-block).
+
 Every recorded answer is real: the NVD, EPSS, OSV and CWE responses in `fixtures/` were captured on 2026-11-05.
 
 ## Install
