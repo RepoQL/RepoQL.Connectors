@@ -1,4 +1,4 @@
--- One row per CVE of the cve import: its id, NVD status, when NVD published and last modified it, the month and severity its path is filed under, the CVSS score that sets the severity with its version, vector and scorer (cna, cisa or nvd), the type of software a model read it as with its confidence and its probabilities of remote code execution and of a network attack (type is unclassified until a model reads it), the vendor and product its numbering authority names, its package URLs and weaknesses, and whether CISA lists it as known exploited, since when and with action due when. Lists are VARCHAR[], instants UTC TIMESTAMPs. uri is the CVE's object, whose nodes product-<n>, score-<n> and fix-<n> hold its products, every party's score, and its fixes.
+-- One row per CVE of the cve import: its id, NVD status, when NVD published and last modified it, the month and severity its path is filed under, the CVSS score that sets the severity with its version, vector and scorer (cna, cisa or nvd), the type of software it is in with type_rule naming the rule that decided it (model when no rule recognised it, with type_confidence; type is unclassified when neither could say), its attack_vector from the CVSS vector (network, adjacent, local or physical), and code_execution, true when its description or a weakness it names says it runs an attacker's code, the vendor and product its numbering authority names, its package URLs and weaknesses, and whether CISA lists it as known exploited, since when and with action due when. Lists are VARCHAR[], instants UTC TIMESTAMPs. uri is the CVE's object, whose nodes product-<n>, score-<n> and fix-<n> hold its products, every party's score, and its fixes.
 view
 SELECT json_extract_string(properties, '$.id') AS id,
        json_extract_string(properties, '$.status') AS status,
@@ -11,9 +11,10 @@ SELECT json_extract_string(properties, '$.id') AS id,
        json_extract_string(properties, '$.cvss_vector') AS cvss_vector,
        json_extract_string(properties, '$.cvss_source') AS cvss_source,
        json_extract_string(properties, '$.type') AS type,
+       json_extract_string(properties, '$.type_rule') AS type_rule,
        TRY_CAST(json_extract_string(properties, '$.type_confidence') AS DOUBLE) AS type_confidence,
-       TRY_CAST(json_extract_string(properties, '$.remote_code_execution') AS DOUBLE) AS remote_code_execution,
-       TRY_CAST(json_extract_string(properties, '$.network_attack') AS DOUBLE) AS network_attack,
+       json_extract_string(properties, '$.attack_vector') AS attack_vector,
+       COALESCE(TRY_CAST(json_extract_string(properties, '$.code_execution') AS BOOLEAN), false) AS code_execution,
        json_extract_string(properties, '$.vendor') AS vendor,
        json_extract_string(properties, '$.product') AS product,
        COALESCE(TRY_CAST(json_extract(properties, '$.packages') AS VARCHAR[]), []::VARCHAR[]) AS packages,

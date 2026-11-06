@@ -1,6 +1,6 @@
 # CVE connector
 
-Copies the CVEs published in the last year, and every CVE known to be exploited, into RepoQL, beside the code they might affect. The CVEs come from NIST's National Vulnerability Database (NVD), and their exploit likelihood from FIRST's EPSS. A model reads what type of software each CVE concerns, and each CVE is filed by the month it was published, its severity, and that type. It is the starting point for CVE scanning with RepoQL: copy it, and change what your readers need.
+Copies the CVEs published in the last year, and every CVE known to be exploited, into RepoQL, beside the code they might affect. The CVEs come from NIST's National Vulnerability Database (NVD), and their exploit likelihood from FIRST's EPSS. Rules read what type of software each CVE concerns, asking a model only about the CVEs they do not recognise, and each CVE is filed by the month it was published, its severity, and that type. It is the starting point for CVE scanning with RepoQL: copy it, and change what your readers need.
 
 ## Two imports
 
@@ -43,7 +43,7 @@ Two jobs, both run by an agent over an uplink that holds the organization's code
   - EPSS's API: 10,000 scores to a page, once a day, when EPSS publishes the day's scores.
   - OSV's batch query, only when a query calls `cve_affects`. It sends the ecosystem, package names and versions the query passes it.
   - MITRE's CWE API, on a full pass and on the first pass: every weakness and category of the CWE list, in about 22 requests.
-- **What it sends to the model.** For each CVE, once: the vendor, product and package names its numbering authority states, and its description, cut at 6,000 characters. Each request is charged to the plan of whoever installed the connector. A year is about 210,000 requests, which the 100,000 an import may have answered in a day spreads over three days. Until a CVE is read, it is filed under `unclassified`. `cve://kev` is about 1,800 requests.
+- **What it sends to the model.** Only for a CVE the rules cannot place, about 29% of them, once: the vendor, product and package names its numbering authority states, and its description, cut at 6,000 characters, with one question, its type. Each request is charged to the plan of whoever installed the connector. A year is about 60,000 requests, inside the 100,000 an import may have answered in a day. Until a CVE is placed, it is filed under `unclassified`. `cve://kev` is a few hundred.
 - **What it writes.** Nothing anywhere: every request but OSV's is a GET, and OSV's batch query only reads.
 
 ## Weaknesses
@@ -69,7 +69,9 @@ Each entry's kind is its abstraction, `weakness.pillar`, `weakness.class`, `weak
   | `apps` | `cms` | `devices` | `ai` |
   | `other` | | | |
 
-  A model chose it, and a CVE no model has read is `unclassified`. The descriptions have not yet been checked against hand-labelled CVEs. Label 30 to 50 of your own, and read `rql connector test … --inference live --labels`, before you rely on them.
+  Rules choose it, in this order: the numbering authority, when it publishes one type of software (the Linux kernel's, Chrome's, and WordPress's); the vendor and product names it gives; the description; and the package's ecosystem. A model chooses it only for a CVE no rule recognises, and `type_rule` says which decided: `name:os`, `assigner:cms`, `package`, or `model`. Measured on 19,516 CVEs a model had read, the rules placed 71% of them, and agreed with the model on 85% of those. Neither has been checked against CVEs labelled by hand: label 30 to 50 of your own before you rely on either. A CVE neither can place is `unclassified`.
+- **Attack vector** is the scorer's CVSS vector: `network`, `adjacent`, `local` or `physical`. A CVE nobody has scored has none.
+- **Code execution** is true when the description says an attacker runs code or commands, or when the CVE names a weakness that is code execution by definition, such as CWE-78, OS command injection.
 - **A CVE moves when its severity or type changes.** Its month never does. Link to a CVE by its origin, `https://www.cve.org/CVERecord?id=…`, which never moves.
 
 ## Why these sources
@@ -89,7 +91,7 @@ This connector is meant to be copied and changed, by editing its code rather tha
 | `WINDOW_DAYS` | 365 | How many days back `cve://recent` holds CVEs. It does not change `cve://kev` |
 | `TYPES_WRITTEN` | every type | Which types of software are written as files, such as `new Set(['libraries', 'frameworks', 'runtimes'])`. The rest stay in the import's database |
 
-The rest is written to be read and changed too. Change the questions the model is asked in `QUESTIONS`, how severity is chosen in `severityOf`, the path each CVE is filed at in `pathOf`, and what each CVE's object shows in `cveObject`. When you change what the model is asked or what a file holds, run `node suite.gen.mjs` and then the suites, as below.
+The rest is written to be read and changed too. Change the rules that read each CVE between `BEGIN RULES` and `END RULES`, the question the model is asked about the rest in `QUESTIONS`, how severity is chosen in `severityOf`, the path each CVE is filed at in `pathOf`, and what each CVE's object shows in `cveObject`. When you change what the model is asked or what a file holds, run `node suite.gen.mjs` and then the suites, as below.
 
 Publish your copy under your own package id: change `package.id` in `manifest.yaml`, and raise `package.version` on every change.
 

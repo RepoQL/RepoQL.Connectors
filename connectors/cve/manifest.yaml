@@ -2,11 +2,11 @@
 # every change: a published version never changes.
 package:
   id: RepoQL.Connectors.Cve
-  version: 1.0.1
+  version: 1.1.0
   authors: RepoQL
 scheme: cve
 title: Publicly reported vulnerabilities (CVEs)
-summary: Copies recent and known-exploited CVEs from NVD, with EPSS exploit likelihood and MITRE's CWE weaknesses they name, has a model read what type of software each concerns, and files them by month, severity and type. It only reads.
+summary: Copies recent and known-exploited CVEs from NVD, with EPSS exploit likelihood and MITRE's CWE weaknesses they name, reads what type of software each concerns, by rules and a model for the rest, and files them by month, severity and type. It only reads.
 calls: [parse, fetch, analyze, render, invoke]
 # Version 1 keeps each CVE as NVD answers it, cut to what render shows: see Cve in connector.ts.
 recordsVersion: 1
@@ -20,7 +20,7 @@ fullFetchIntervalSeconds: 604800
 # A CVE's description may run to thousands of characters, and a few CVEs list hundreds of products and references.
 # The connector cuts each record to fit 64 KiB.
 maxValueBytes: 65536
-# A model reads each CVE once: the type of software it concerns, and two facts about the attack.
+# A model is asked one question, the type of software, about each CVE the rules in connector.ts do not recognise.
 inference: true
 network:
   hosts:

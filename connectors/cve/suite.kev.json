@@ -102,22 +102,6 @@
         "what": "None of the types above, or the description does not say what the software is."
        }
       }
-     },
-     "remote_code_execution": {
-      "type": "noul",
-      "instructions": "Does the record in `description` say that exploiting the vulnerability lets an attacker run code or commands of their choosing on the affected system? Judge only what the description says.",
-      "criteria": {
-       "true": "Remote or arbitrary code execution, command injection, or a memory corruption the description says leads to running code.",
-       "false": "Reading or changing data, cross-site scripting in a victim's browser, denial of service, or a crash the description does not say leads to running code."
-      }
-     },
-     "network_attack": {
-      "type": "noul",
-      "instructions": "Does the record in `description` say the vulnerability can be exploited by someone who reaches the software over a network, without already having access to the machine it runs on? Judge only what the description says.",
-      "criteria": {
-       "true": "An attack sent over a network: a crafted request, message, packet or page, from someone who only reaches the software remotely.",
-       "false": "An attacker who must already be logged in to the machine, have physical access, or have the victim open a local file."
-      }
      }
     }
    },
@@ -147,14 +131,6 @@
        "ai": 0.9,
        "other": 0.0083
       }
-     },
-     "remote_code_execution": {
-      "type": "noul",
-      "noul": 0.08
-     },
-     "network_attack": {
-      "type": "noul",
-      "noul": 0.96
      }
     }
    }
@@ -259,22 +235,6 @@
         "what": "None of the types above, or the description does not say what the software is."
        }
       }
-     },
-     "remote_code_execution": {
-      "type": "noul",
-      "instructions": "Does the record in `description` say that exploiting the vulnerability lets an attacker run code or commands of their choosing on the affected system? Judge only what the description says.",
-      "criteria": {
-       "true": "Remote or arbitrary code execution, command injection, or a memory corruption the description says leads to running code.",
-       "false": "Reading or changing data, cross-site scripting in a victim's browser, denial of service, or a crash the description does not say leads to running code."
-      }
-     },
-     "network_attack": {
-      "type": "noul",
-      "instructions": "Does the record in `description` say the vulnerability can be exploited by someone who reaches the software over a network, without already having access to the machine it runs on? Judge only what the description says.",
-      "criteria": {
-       "true": "An attack sent over a network: a crafted request, message, packet or page, from someone who only reaches the software remotely.",
-       "false": "An attacker who must already be logged in to the machine, have physical access, or have the victim open a local file."
-      }
      }
     }
    },
@@ -304,14 +264,6 @@
        "ai": 0.0083,
        "other": 0.0083
       }
-     },
-     "remote_code_execution": {
-      "type": "noul",
-      "noul": 0.05
-     },
-     "network_attack": {
-      "type": "noul",
-      "noul": 0.95
      }
     }
    }
@@ -416,22 +368,6 @@
         "what": "None of the types above, or the description does not say what the software is."
        }
       }
-     },
-     "remote_code_execution": {
-      "type": "noul",
-      "instructions": "Does the record in `description` say that exploiting the vulnerability lets an attacker run code or commands of their choosing on the affected system? Judge only what the description says.",
-      "criteria": {
-       "true": "Remote or arbitrary code execution, command injection, or a memory corruption the description says leads to running code.",
-       "false": "Reading or changing data, cross-site scripting in a victim's browser, denial of service, or a crash the description does not say leads to running code."
-      }
-     },
-     "network_attack": {
-      "type": "noul",
-      "instructions": "Does the record in `description` say the vulnerability can be exploited by someone who reaches the software over a network, without already having access to the machine it runs on? Judge only what the description says.",
-      "criteria": {
-       "true": "An attack sent over a network: a crafted request, message, packet or page, from someone who only reaches the software remotely.",
-       "false": "An attacker who must already be logged in to the machine, have physical access, or have the victim open a local file."
-      }
      }
     }
    },
@@ -461,14 +397,6 @@
        "ai": 0.0083,
        "other": 0.0083
       }
-     },
-     "remote_code_execution": {
-      "type": "noul",
-      "noul": 0.97
-     },
-     "network_attack": {
-      "type": "noul",
-      "noul": 0.96
      }
     }
    }
@@ -6396,7 +6324,7 @@
        "\"known_exploited\":true"
       ]
      },
-     "cves/2026-07/medium/apps/microsoft/microsoft-sharepoint-enterprise-server-2016/CVE-2026-56164.rqlobject": {
+     "cves/2026-07/medium/cms/microsoft/microsoft-sharepoint-enterprise-server-2016/CVE-2026-56164.rqlobject": {
       "contains": [
        "\"known_exploited\":true"
       ]
@@ -12169,7 +12097,7 @@
      "placed": 2
     },
     "paths": {
-     "cves/2026-07/medium/apps/microsoft/microsoft-sharepoint-enterprise-server-2016/CVE-2026-56164.rqlobject": {
+     "cves/2026-07/medium/cms/microsoft/microsoft-sharepoint-enterprise-server-2016/CVE-2026-56164.rqlobject": {
       "absent": true
      },
      "cves/2021-12/critical/libraries/apache-software-foundation/apache-log4j2/CVE-2021-44228.rqlobject": {

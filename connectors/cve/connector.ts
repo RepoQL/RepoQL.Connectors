@@ -57,7 +57,8 @@ import { Connector, InvalidImport, RateLimited, canonicalAddress, compareInstant
 const WINDOW_DAYS = 365;
 
 // The types of software whose CVEs are written as files, or undefined for every type, such as
-// new Set(['libraries', 'frameworks', 'runtimes']). The rest stay in the import's database. A CVE no model has read yet
+// new Set(['libraries', 'frameworks', 'runtimes']). The rest stay in the import's database. A CVE neither the rules nor
+// the model could place yet
 // is written whatever this says. The types are the keys of QUESTIONS.type.criteria.
 const TYPES_WRITTEN: ReadonlySet<string> | undefined = undefined;
 
@@ -115,7 +116,7 @@ const TYPES: Record<string, { title: string; what: string; not_for: string; alia
   other: { title: 'Other', what: 'None of the types above, or the description does not say what the software is.', not_for: 'Software that fits one of the types above.', aliases: ['other', 'unknown type'] },
 };
 const TYPE_NAMES = Object.keys(TYPES);
-// Where a CVE's file goes while no model has read it.
+// Where a CVE's file goes while neither the rules nor the model can say what type of software it is in.
 const UNREAD = 'unclassified';
 
 // The suite's generator reads this object from between the two markers, so keep it a plain object literal.
@@ -140,24 +141,92 @@ const QUESTIONS = {
       other: { what: 'None of the types above, or the description does not say what the software is.' },
     },
   },
-  remote_code_execution: {
-    type: 'noul',
-    instructions: 'Does the record in `description` say that exploiting the vulnerability lets an attacker run code or commands of their choosing on the affected system? Judge only what the description says.',
-    criteria: {
-      true: 'Remote or arbitrary code execution, command injection, or a memory corruption the description says leads to running code.',
-      false: 'Reading or changing data, cross-site scripting in a victim\'s browser, denial of service, or a crash the description does not say leads to running code.',
-    },
-  },
-  network_attack: {
-    type: 'noul',
-    instructions: 'Does the record in `description` say the vulnerability can be exploited by someone who reaches the software over a network, without already having access to the machine it runs on? Judge only what the description says.',
-    criteria: {
-      true: 'An attack sent over a network: a crafted request, message, packet or page, from someone who only reaches the software remotely.',
-      false: 'An attacker who must already be logged in to the machine, have physical access, or have the victim open a local file.',
-    },
-  },
 };
 // END QUESTIONS
+
+// =====================================================================================================================
+// How a CVE is read: rules over what its record states
+// =====================================================================================================================
+//
+// Rules read a CVE first. Its type comes from its numbering authority, then the names it gives, then its description,
+// then its packages, and a model is asked only when no rule recognises it; its attack vector from its CVSS vector; and whether it executes code from its own words and the weaknesses
+// it names. Each rule is a pattern you can read and change. A CVE no rule recognises is unclassified, which is a
+// statement that the rules do not know it, not a reading of nothing.
+//
+// The block between the markers takes no import, so a script can load it as it is to measure the rules.
+// BEGIN RULES
+
+// What the rules read of one CVE.
+interface Facts { assigner?: string; vendor?: string; product?: string; packages: string[]; description: string; cwes: string[]; vector?: string }
+
+// What they answer. rule names the rule that chose the type, so a wrong type can be traced to the pattern that chose it.
+interface Reading { type: string; rule: string; attack_vector?: string; code_execution: boolean }
+
+// A rule matches the names the numbering authority gives (vendor and product), or those and the description too. A
+// platform word, such as Android or Node.js, says where software runs, not what it is, so its rules read names only.
+type Where = 'names' | 'both';
+
+// The types in the order they are tried: the narrower first, so that a WordPress plugin that mentions MySQL is a cms,
+// and a MongoDB driver is a library rather than a database.
+const TYPE_RULES: [type: string, where: Where, pattern: RegExp][] = [
+  ['cms', 'both', /\b(wordpress|drupal|joomla|typo3|magento|adobe commerce|prestashop|opencart|woocommerce|sharepoint|mediawiki|confluence|craft cms|concrete ?cms|umbraco|sitecore|payload ?cms|apostrophe ?cms|strapi|directus|grav cms|phpmyfaq|yeswiki|thelia|vbulletin|phpbb|xenforo|moodle|adobe experience manager|webcenter content|dotcms|liferay|october ?cms|silverstripe|fuel cms|cms)\b/],
+  ['devices', 'names', /\b(pan-os|arubaos|aos-[0-9]+|junos( os)?( evolved)?|fortios|fabric os|nx-os|ios xe|ios xr|fireware os|opnsense|pfsense)\b/],
+  ['devices', 'both', /\b(d-link|tp-link|netgear|totolink|tenda|wavlink|zyxel|mikrotik|ubiquiti|hikvision|dahua|mediatek|qualcomm|advantech|moxa|schneider electric|rockwell|simatic|sonicwall|synology|qnap|linksys|draytek|edimax|trendnet|routers?|firmware|ip cameras?|nvr|dvr|access points?|chipsets?|modems?|plc|scada|printers?|ip phones?|bmc|uefi|bios|data domain|session smart router|ngfw|firewall appliance)\b/],
+  ['os', 'names', /\b(linux|windows( server| \d+| 1[01])?|macos|mac os x|ipados|ios and ipados|iphone os|watchos|tvos|visionos|android|chromeos|zephyr|solaris|freebsd|openbsd|netbsd|red hat enterprise linux|ubuntu|debian|fedora|harmonyos|qnx|vxworks)\b/],
+  ['os', 'both', /\b(linux kernel)\b/],
+  ['ai', 'both', /\b(llms?|large language models?|langchain|langflow|llama(\.cpp|index)?|vllm|sglang|ollama|open-?webui|mlflow|kubeflow|pydantic-ai|praisonai|agno|litellm|comfyui|gradio|hugging ?face|model context protocol|mcp server|ai agents?|agentic|retrieval-augmented|inference server|tensorflow|pytorch|onnx ?runtime|triton inference)\b/],
+  ['libraries', 'names', /\b(connector|driver|client library|sdk|library|libraries|bindings?|jdbc|odbc|crate|toolkit)\b/],
+  ['libraries', 'both', /^[^.]{0,120}\b(is|provides) an? ([\w./+-]+ ){0,6}(library|sdk|package|crate|module|parser|bindings?|toolkit|client)\b/],
+  ['apps', 'both', /\b((android|ios|mobile|desktop) (app|application)|browser extension|web browser|chrome|chromium|firefox|thunderbird|safari|microsoft (365|office)|outlook|acrobat|photoshop|illustrator|freerdp|vlc|7-zip|winrar|notepad\+\+|erpnext|jeecg(boot)?|jd edwards|peoplesoft|siebel|e-business suite|splunk|n8n|suitecrm|ofbiz|odoo|nextcloud|owncloud|grafana|kibana|fabric composer)\b/],
+  ['databases', 'both', /\b(mysql|mariadb|postgres(ql)?|sqlite|mongodb|redis|valkey|elasticsearch|opensearch|cassandra|couchdb|clickhouse|duckdb|oracle database|sql server|db2|marklogic|essbase|surrealdb|neo4j|influxdb|cockroachdb|kylin|arcadedb|falkordb|memcached|etcd|tidb|timescaledb)\b/],
+  ['runtimes', 'names', /\b(java se|openjdk|jdk|jre|openj9|\.net( framework| core)?( \d+(\.\d+)?)?( runtime)?|node\.?js|deno|cpython|python|go standard library|erlang|otp|wasmtime|wasmer|v8|quickjs(-ng)?|glibc|musl|vyper|php)\b/],
+  ['servers', 'both', /\b(apache http server|httpd|nginx|tomcat|jetty|iis|haproxy|envoy proxy|traefik|caddy|openssh|bind 9|unbound|exim|postfix|dovecot|sendmail|hmailserver|exchange server|zimbra|asterisk|freeswitch|ws_ftp|samba|squid|varnish|traffic server|apache pulsar|kafka|rabbitmq|activemq|weblogic|websphere|jboss|wildfly|glassfish|datapower|keycloak|openldap|freeradius|openvpn|strongswan|rest data services|security verify access)\b/],
+  ['servers', 'names', /\b(server|mail server|web server|ftp server|dns server|application server|proxy|gateway)\b/],
+  ['devtools', 'both', /\b(gitea|gitlab|github enterprise|jenkins|teamcity|bamboo|jetbrains|intellij|pycharm|webstorm|phpstorm|rubymine|goland|rider|clion|datagrip|visual studio( code)?|vs ?code|xcode|eclipse ide|virtualenv|npm cli|nvm|gradle|nexus repository|artifactory|sonarqube|argo ?cd|ghidra|octopus (server|deploy)|terraform|ansible|vagrant|jupyter(lab)?)\b/],
+  ['cloud', 'both', /\b(kubernetes|openshift|rancher|docker|containerd|podman|kyverno|istio|helm|xen|kvm|qemu|vmware|esxi|vcenter|virtualbox|hyper-v|openstack|incus|lxc|lxd|slurm|amazon web services|azure|google cloud|cloud foundry|nomad|commvault)\b/],
+  ['frameworks', 'both', /\b(spring( boot| framework)?|struts|django|flask|fastapi|ruby on rails|laravel|symfony|express\.js|next\.js|nuxt|angular|react|vue\.js|svelte|asp\.net( core)?|blazor|apache camel|wicket|vert\.x|helidon|quarkus|micronaut|backstage|parse-server|qt|kendo ui|coldfusion|soa suite|phoenix framework)\b/],
+];
+
+// Numbering authorities that publish CVEs of one type of software: the Linux kernel's, Chrome's, and the WordPress
+// ecosystem's, whose CVEs often name a plugin and never say WordPress. They are tried before any other rule.
+const ASSIGNER_RULES: [type: string, pattern: RegExp][] = [
+  ['os', /^(416baaa9-dc9f-4396-8d5f-8c081fb06d67|cve@kernel\.org)$/],
+  ['apps', /^chrome-cve-admin@google\.com$/],
+  ['cms', /@(wordfence\.com|wpscan\.com|patchstack\.com)$/],
+];
+
+// A package in one of these ecosystems is a library, unless a rule above names it as something else.
+const LIBRARY_ECOSYSTEMS = /^pkg:(npm|pypi|maven|nuget|cargo|gem|golang|composer|hex|pub|cpan|swift|cocoapods|conan)\//;
+
+// Weaknesses that are code execution by definition: code, command and expression injection, and template injection.
+const CODE_EXECUTION_CWES = new Set(['CWE-77', 'CWE-78', 'CWE-94', 'CWE-95', 'CWE-98', 'CWE-917', 'CWE-1336']);
+const CODE_EXECUTION_WORDS = /\b(remote code execution|rce|(execute|execution of|run) (arbitrary|malicious|remote|attacker[- ]controlled|unauthorized) (code|commands?|scripts?|programs?)|(os |shell )?command injection|code injection|arbitrary command)\b/i;
+
+const ATTACK_VECTORS: Record<string, string> = { N: 'network', A: 'adjacent', L: 'local', P: 'physical' };
+
+function readFacts(facts: Facts): Reading {
+  const names = `${facts.vendor ?? ''} ${facts.product ?? ''}`.toLowerCase();
+  const description = facts.description.toLowerCase();
+  // An authority that publishes one type of software decides first: a WordPress plugin named Media Library Assistant is
+  // a cms, whatever its name says. Then the names it gives, the description, and the packages.
+  const found =
+    match('assigner', ASSIGNER_RULES.find(([, pattern]) => pattern.test(facts.assigner ?? ''))) ??
+    match('name', TYPE_RULES.find(([, , pattern]) => pattern.test(names))) ??
+    match('description', TYPE_RULES.find(([, where, pattern]) => where === 'both' && pattern.test(description))) ??
+    (facts.packages.some(purl => LIBRARY_ECOSYSTEMS.test(purl)) ? { type: 'libraries', rule: 'package' } : undefined) ??
+    { type: 'unclassified', rule: 'none' };
+  const av = /\bAV:([NALP])\b/.exec(facts.vector ?? '')?.[1];
+  return {
+    ...found,
+    ...(av ? { attack_vector: ATTACK_VECTORS[av] } : {}),
+    code_execution: CODE_EXECUTION_WORDS.test(facts.description) || facts.cwes.some(cwe => CODE_EXECUTION_CWES.has(cwe)),
+  };
+}
+
+function match(source: string, rule: readonly [string, ...unknown[]] | undefined): { type: string; rule: string } | undefined {
+  return rule ? { type: rule[0], rule: `${source}:${rule[0]}` } : undefined;
+}
+// END RULES
 
 // =====================================================================================================================
 // The records
@@ -195,7 +264,9 @@ interface Kev { added: string; due?: string; action?: string; name?: string }
 interface Epss { epss: number; percentile: number; date: string }
 
 // The model's reading of one CVE.
-interface Label { type: string; type_confidence: number; remote_code_execution: number; network_attack: number; model: string }
+// How a CVE was read. The rules decide its attack vector and whether it executes code; they decide its type when they
+// recognise it, and the model when they do not, in which case model and type_confidence say so.
+interface Label { type: string; rule: string; attack_vector?: string; code_execution: boolean; type_confidence?: number; model?: string }
 
 // Where a CVE's file is, and where it was before analyze last moved it.
 interface Placed { path: string; from?: string }
@@ -234,11 +305,11 @@ const CONCEPTS: Concept[] = [
     why: 'Several parties score one CVE and they disagree. NVD no longer scores most CVEs, so the numbering authority\'s own score usually decides. Every party\'s vector is a metric node of the object, so a disagreement is visible rather than averaged away.',
   },
   {
-    name: 'CveTypeIsAModelsReading', category: 'rule', relevance: ['cves/**', 'types/**', 'overview.md'],
-    invariant: 'type, remote_code_execution and network_attack are a model\'s reading of the vendor, product and description alone; unclassified means not read yet, never a reading of nothing.',
-    tags: ['cve', 'type', 'category', 'classification', 'model', 'probability', 'remote code execution', 'rce', 'network'],
-    why: 'NVD states no type of software. A model reads each CVE once, and its answer is kept until the vendor, product or description changes. remote_code_execution and network_attack are probabilities, so a reader chooses the threshold.',
-    example: 'SELECT id FROM cve_vulnerabilities WHERE remote_code_execution >= 0.8 AND network_attack >= 0.8 asks for both with some certainty.',
+    name: 'CveReadingsAreRulesFirst', category: 'rule', relevance: ['cves/**', 'types/**', 'overview.md'],
+    invariant: 'attack_vector is the scorer\'s CVSS vector, code_execution is the CVE\'s own words and weaknesses, and type is a rule\'s reading, or a model\'s when type_rule is model; unclassified means neither could say.',
+    tags: ['cve', 'type', 'category', 'classification', 'rules', 'model', 'attack vector', 'network', 'remote code execution', 'rce', 'code execution'],
+    why: 'NVD states no type of software. Rules read the names the numbering authority gives, the authority itself, the description and the packages; a model is asked only about a CVE no rule recognises. type_rule names the rule that decided, so a wrong type can be traced to its pattern in connector.ts.',
+    example: "SELECT id FROM cve_vulnerabilities WHERE attack_vector = 'network' AND code_execution asks for remote code execution.",
   },
 ];
 
@@ -519,22 +590,18 @@ export default class Cves extends Connector {
     return page.next ? { cursor: page.next } : {};
   }
 
-  // The model's reading of one CVE, or undefined when it has none yet or answered out of shape.
-  private read(cve: Cve): Label | undefined {
+  // How one CVE reads: the rules first, and the model only for a type no rule recognises. When the model has no answer
+  // yet, or answers out of shape, the CVE stays unclassified, and the next full analyze asks again.
+  private read(cve: Cve): Label {
+    const reading = readFacts(factsOf(cve));
+    if (reading.type !== UNREAD) return reading;
     const decision = this.llm.decide({ state: stateOf(cve), questions: QUESTIONS as unknown as Record<string, Question> });
-    if (!decision) return undefined;
-    const type = decision.answers.type as Answer | undefined;
-    if (!type || type.type !== 'choice' || !TYPE_NAMES.includes(type.choice)) {
-      console.warn(`The model's answer about ${cve.id} holds no type among ${TYPE_NAMES.join(', ')}, so it stays unclassified.`);
-      return undefined;
+    const type = decision?.answers.type as Answer | undefined;
+    if (!decision || !type || type.type !== 'choice' || !TYPE_NAMES.includes(type.choice)) {
+      if (decision) console.warn(`The model's answer about ${cve.id} holds no type among ${TYPE_NAMES.join(', ')}, so it stays unclassified.`);
+      return reading;
     }
-    const rce = probability(decision.answers.remote_code_execution);
-    const network = probability(decision.answers.network_attack);
-    if (rce === undefined || network === undefined) {
-      console.warn(`The model's answer about ${cve.id} holds no probability for remote_code_execution or network_attack, so it stays unclassified.`);
-      return undefined;
-    }
-    return { type: type.choice, type_confidence: type.confidence, remote_code_execution: rce, network_attack: network, model: decision.model };
+    return { ...reading, type: type.choice, rule: 'model', type_confidence: type.confidence, model: decision.model };
   }
 
   // ---- render -------------------------------------------------------------------------------------------------------
@@ -856,6 +923,17 @@ function fit(cve: Cve): Cve {
 // =====================================================================================================================
 
 // What the model is shown: the names the record states and its description, nothing it would read as a conclusion.
+// What the rules read of one CVE: the names its numbering authority gives, the authority, its packages, description and
+// weaknesses, and the CVSS vector that set its severity.
+function factsOf(cve: Cve): Facts {
+  const first = cve.products[0];
+  const purls = [...new Set(cve.products.map(entry => entry.purl).filter((purl): purl is string => purl !== undefined))];
+  return {
+    assigner: cve.assigner, vendor: first?.vendor, product: first?.product ?? first?.package, packages: purls,
+    description: cve.description, cwes: cve.cwes, vector: severityOf(cve).metric?.vector,
+  };
+}
+
 function stateOf(cve: Cve): Json {
   const first = cve.products[0];
   const description = cve.description.length > DESCRIPTION_SENT ? cve.description.slice(0, DESCRIPTION_SENT) : cve.description;
@@ -864,10 +942,6 @@ function stateOf(cve: Cve): Json {
   if (first?.product) state.product = first.product;
   if (first?.package) state.package = first.package;
   return state;
-}
-
-function probability(answer: Answer | undefined): number | undefined {
-  return answer && answer.type === 'noul' && typeof answer.noul === 'number' && answer.noul >= 0 && answer.noul <= 1 ? answer.noul : undefined;
 }
 
 // The score that sets a CVE's severity: the numbering authority's, then CISA's, then NVD's, then anyone's, and CVSS 4.0
@@ -1135,7 +1209,12 @@ function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string
   if (first?.product ?? first?.package) properties.product = (first?.product ?? first?.package) as string;
   if (metric) Object.assign(properties, { cvss_score: metric.score, cvss_version: metric.version, cvss_vector: metric.vector, cvss_source: metric.by });
   if (cve.kev) Object.assign(properties, { kev_added: cve.kev.added, ...(cve.kev.due ? { kev_due: cve.kev.due } : {}) });
-  if (label) Object.assign(properties, { type: label.type, type_confidence: rounded(label.type_confidence), remote_code_execution: rounded(label.remote_code_execution), network_attack: rounded(label.network_attack), read_by: label.model });
+  if (label) Object.assign(properties, {
+    type: label.type, type_rule: label.rule, code_execution: label.code_execution,
+    ...(label.attack_vector ? { attack_vector: label.attack_vector } : {}),
+    ...(label.type_confidence !== undefined ? { type_confidence: rounded(label.type_confidence) } : {}),
+    ...(label.model ? { read_by: label.model } : {}),
+  });
   else if (!rejected) properties.type = UNREAD;
 
   // The kind names the severity and the type, as the path does, so each pair is a semantic media type of its own, such
@@ -1166,8 +1245,8 @@ function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string
   if (cve.kev)
     object = object.withAnnotation('warning', `CISA lists ${cve.id} as known exploited since ${cve.kev.added}${cve.kev.due ? `, with action due ${cve.kev.due}` : ''}.`,
       { rule: 'cve.known-exploited', details: stripped({ added: cve.kev.added, due: cve.kev.due }) });
-  if (!label && !rejected)
-    object = object.withAnnotation('info', 'No model has read it yet, so its type is unclassified. That is not a reading of nothing.', { rule: 'cve.unread' });
+  if (!rejected && (label?.type ?? UNREAD) === UNREAD)
+    object = object.withAnnotation('info', 'Neither the rules nor the model could say what type of software it is in yet, so its type is unclassified. That is not a reading of nothing.', { rule: 'cve.unread' });
   if (rejected)
     object = object.withAnnotation('info', 'Its numbering authority rejected it: it is not a vulnerability record, and no product is affected.', { rule: 'cve.rejected' });
 
@@ -1176,7 +1255,7 @@ function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string
     : [
       flawSentence(cve),
       `${[first?.vendor, first?.product ?? first?.package].filter(Boolean).join(' ') || 'no product named'}${first?.versions.length ? ` — ${first.versions.join('; ')}` : ''}`,
-      `${severity}${metric ? ` (CVSS ${metric.version} ${metric.score} from ${scorerWords(metric.by)})` : ''} · ${label ? label.type : UNREAD}${cve.kev ? ` · known exploited since ${cve.kev.added}` : ''}`,
+      `${severity}${metric ? ` (CVSS ${metric.version} ${metric.score} from ${scorerWords(metric.by)})` : ''} · ${label ? label.type : UNREAD}${label?.attack_vector ? ` · ${label.attack_vector} attack` : ''}${label?.code_execution ? ' · code execution' : ''}${cve.kev ? ` · known exploited since ${cve.kev.added}` : ''}`,
       ...(cve.cwes.length > 0 ? [`weaknesses ${cve.cwes.map(cwe => weaknessNames.has(cwe) ? `${cwe} ${weaknessNames.get(cwe)}` : cwe).join('; ')}`] : []),
       ...(purls.length > 0 ? [`packages ${purls.join(', ')}`] : []),
       fixes.length > 0 ? `fix referenced, in fix-1${fixes.length > 1 ? ` to fix-${fixes.length}` : ''}` : 'no fix referenced',
@@ -1216,14 +1295,14 @@ function overviewFile(counts: Counts, whole: boolean, windowDays: number | undef
   lines.push('', '## By severity', '', '| Severity | CVEs |', '|----------|-----:|');
   for (const severity of SEVERITIES) lines.push(`| ${severity} | ${counts.bySeverity[severity] ?? 0} |`);
   lines.push('', '## By type', '', '| Type | CVEs | What it is |', '|------|-----:|------------|');
-  for (const type of [...TYPE_NAMES, UNREAD]) lines.push(`| [${type}](types/${type}.md) | ${counts.byType[type] ?? 0} | ${type === UNREAD ? 'Not read by a model yet.' : TYPES[type].title} |`);
+  for (const type of [...TYPE_NAMES, UNREAD]) lines.push(`| [${type}](types/${type}.md) | ${counts.byType[type] ?? 0} | ${type === UNREAD ? 'Neither the rules nor the model could say yet.' : TYPES[type].title} |`);
   return lines.join('\n') + '\n';
 }
 
 // What one type means, what it is not, and how many CVEs it holds.
 function typeFile(type: string, counts: Counts): string {
   if (type === UNREAD)
-    return `# Unclassified CVEs\n\n${counts.byType[UNREAD] ?? 0} CVEs no model has read yet. Each moves to its type's folder once a model reads it.\n`;
+    return `# Unclassified CVEs\n\n${counts.byType[UNREAD] ?? 0} CVEs neither the rules nor the model could place yet. Each moves to its type's folder once one can.\n`;
   const meaning = TYPES[type];
   return [`# ${meaning.title}`, '', meaning.what, '', `Not for: ${meaning.not_for}`, '',
     `${counts.byType[type] ?? 0} CVEs, at \`cves/*/*/${type}/**\`. A model chose each one's type from its vendor, product and description.`, ''].join('\n');

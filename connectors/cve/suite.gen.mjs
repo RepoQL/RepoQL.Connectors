@@ -155,8 +155,6 @@ function reading(record, type, rce, network) {
   const probabilities = Object.fromEntries(TYPE_NAMES.map(name => [name, name === type ? 0.9 : Math.round(0.1 / (TYPE_NAMES.length - 1) * 10000) / 10000]));
   return { decide: request(record), answer: { model: 'decision-fixture', usage: { input_tokens: 1420, output_tokens: 9 }, answers: {
     type: { type: 'choice', choice: type, confidence: 0.8, probabilities },
-    remote_code_execution: { type: 'noul', noul: rce },
-    network_attack: { type: 'noul', noul: network },
   } } };
 }
 
@@ -169,7 +167,7 @@ const BROTLI_HIGH = 'cves/2026-11/high/libraries/cpan.org/xs-libbrotli/CVE-2026-
 const DLINK_PATH = 'cves/2026-11/critical/devices/d-link/dir-505/CVE-2026-120189.rqlobject';
 const PLUGIN_PATH = 'cves/2026-11/medium/cms/unknown/media-library-assistant/CVE-2026-113482.rqlobject';
 const LITELLM_PATH = 'cves/2026-07/high/ai/berriai/litellm/CVE-2026-59822.rqlobject';
-const SHAREPOINT_PATH = 'cves/2026-07/medium/apps/microsoft/microsoft-sharepoint-enterprise-server-2016/CVE-2026-56164.rqlobject';
+const SHAREPOINT_PATH = 'cves/2026-07/medium/cms/microsoft/microsoft-sharepoint-enterprise-server-2016/CVE-2026-56164.rqlobject';
 const LOGURU_PATH = 'cves/2026-11/low/unclassified/delgan/loguru/CVE-2026-120217.rqlobject';
 const LOG4J_PATH = 'cves/2021-12/critical/libraries/apache-software-foundation/apache-log4j2/CVE-2021-44228.rqlobject';
 const origin = id => `https://www.cve.org/CVERecord?id=${id}`;
@@ -199,13 +197,13 @@ const suite = {
         rows: { 'state/watermark': { value: { modified: WATERMARK } }, 'state/epss': { value: { date: '2026-11-04' } }, 'state/cwe': { value: { version: '4.21 of 2026-10-28', shape: 2 } } },
         paths: {
           [BROTLI_UNSCORED]: { origin: origin('CVE-2026-115946'), contains: ['"severity":"unscored"', '"type":"libraries"', 'pkg:cpan/XS-libbrotli'] },
-          [DLINK_PATH]: { contains: ['"cvss_score":9.3', '"cvss_source":"cna"', '"type":"devices"', '"kind":"vulnerability.critical.devices"'] },
+          [DLINK_PATH]: { contains: ['"cvss_score":9.3', '"cvss_source":"cna"', '"type":"devices"', '"type_rule":"name:devices"', '"kind":"vulnerability.critical.devices"'] },
           [PLUGIN_PATH]: { contains: ['"cvss_source":"cisa"', '"severity":"medium"'] },
           [LITELLM_PATH]: { contains: ['"known_exploited":true', '"kev_added":"2026-09-02"', 'cve.known-exploited'] },
           [SHAREPOINT_PATH]: { contains: ['"cvss_score":5.3', '"cvss_source":"cna"', 'CVSS 3.1 9.8 from NVD'] },
           'rejected/CVE-2026-80726.rqlobject': { contains: ['cve.rejected', '"kind":"vulnerability.rejected"'] },
           'scores/epss.csv': { contains: ['cve,epss,percentile,date', 'CVE-2026-120189,0.01346,0.7151,2026-11-04'] },
-          [LOG4J_PATH]: { origin: origin('CVE-2021-44228'), contains: ['"known_exploited":true', '"kev_added":"2021-12-10"', '"type":"libraries"', 'weaknesses/CWE-400.rqlobject', 'weaknesses/CWE-502.rqlobject'] },
+          [LOG4J_PATH]: { origin: origin('CVE-2021-44228'), contains: ['"known_exploited":true', '"kev_added":"2021-12-10"', '"type":"libraries"', '"type_rule":"model"', '"attack_vector":"network"', '"code_execution":true', 'network attack · code execution', 'weaknesses/CWE-400.rqlobject', 'weaknesses/CWE-502.rqlobject'] },
           'overview.md': { contains: ['every CVE CISA lists as known exploited, whatever its age: 6 CVEs, and 1 withdrawn', '3 are known exploited'] },
           'weaknesses/CWE-1333.rqlobject': { origin: 'https://cwe.mitre.org/data/definitions/1333.html',
             contains: ['"kind":"weakness.base"', 'CWE-1333 — Inefficient Regular Expression Complexity', '"key":"child-of-407"', '"type":"EXTENDS"', 'weaknesses/CWE-407.rqlobject',
@@ -262,8 +260,7 @@ const suite = {
       clock: '2026-11-05T16:00:00Z', pass: 'incremental',
       interactions: [...changedSince('2026-11-05T11:40:02.517Z', '2026-11-05T16:00:00Z', [LOGURU_LATE]), epssDay],
       expect: {
-        rows: { 'labels/CVE-2026-120217': { absent: true } },
-        paths: { [LOGURU_PATH]: { contains: ['"type":"unclassified"', 'cve.unread', '"kind":"vulnerability.low.unclassified"', 'weaknesses/CWE-1333.rqlobject', 'weaknesses CWE-1333 Inefficient Regular Expression Complexity; CWE-400 Uncontrolled Resource Consumption'] } },
+        paths: { [LOGURU_PATH]: { contains: ['"type":"unclassified"', '"type_rule":"none"', 'cve.unread', '"kind":"vulnerability.low.unclassified"', 'weaknesses/CWE-1333.rqlobject', 'weaknesses CWE-1333 Inefficient Regular Expression Complexity; CWE-400 Uncontrolled Resource Consumption'] } },
         views: { cve_weaknesses: { contains: [{ id: 'CWE-1333', cves: 1 }, { id: 'CWE-400', cves: 2 }] } },
       },
     },

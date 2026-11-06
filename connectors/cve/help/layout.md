@@ -36,7 +36,7 @@ A glob selects by those alone. `overview.md` counts them, and `types/<type>.md` 
 - **Headline:** the id and the first sentence of the description that says something of the flaw.
 - **`=> structure`:** what the flaw is, the product and affected versions, its severity and the score that set it, its type, whether it is known exploited, its weaknesses by name, its packages, and whether a fix is referenced, in a few lines. Semantic search matches a CVE on this text, so it leads with the words of its description. A weakness's structure likewise leads with its name, the other names MITRE gives it, such as ReDoS, and what it is.
 - **Content:** the description as NVD holds it.
-- **Properties:** every fact `cve_vulnerabilities` reads, such as `severity`, `cvss_score`, `cvss_source`, `type`, `remote_code_execution`, `network_attack`, `known_exploited`, `kev_added`, `packages` and `cwes`.
+- **Properties:** every fact `cve_vulnerabilities` reads, such as `severity`, `cvss_score`, `cvss_source`, `type`, `type_rule`, `attack_vector`, `code_execution`, `known_exploited`, `kev_added`, `packages` and `cwes`.
 
 **Its nodes,** each read alone by its key:
 - `product-<n>`: each product and version range the numbering authority names;
@@ -45,7 +45,7 @@ A glob selects by those alone. `overview.md` counts them, and `types/<type>.md` 
 
 **Annotations:**
 - `cve.known-exploited`: CISA lists it as exploited;
-- `cve.unread`: no model has read it yet;
+- `cve.unread`: neither the rules nor the model could say what type of software it is in;
 - `cve.rejected`: its numbering authority withdrew it.
 
 ## Reading it right
@@ -53,6 +53,6 @@ A glob selects by those alone. `overview.md` counts them, and `types/<type>.md` 
 - **The kind names severity and type.** Each CVE's kind is `cve.vulnerability.<severity>.<type>`, or `cve.vulnerability.rejected`, so `media_type_kind(mime)` and the dashboard's colours tell them apart. It changes when the path does.
 - **Each import is its own root.** With both imported, `cve_vulnerabilities` and the views over it hold a known exploited CVE once for each import, and `uri` says which. Pass `cve_epss` the root of the import you mean, such as `cve_epss('cve://kev/')`.
 - **Severity has one scorer.** It is the first of: the numbering authority's CVSS, then CISA's, then NVD's, with 4.0 before 3.1. `cvss_source` says which. `unscored` means nobody has scored it yet, not that it is harmless.
-- **Type and the two probabilities are a model's reading** of the vendor, product and description. `unclassified` means not read yet. Choose your own threshold on `remote_code_execution` and `network_attack`.
+- **Type is a rule's reading, or a model's.** `type_rule` says which: a rule names where it matched, such as `name:os` or `assigner:cms`, and `model` means no rule recognised the CVE. `unclassified` means neither could say. `attack_vector` is the scorer's CVSS vector, and `code_execution` the CVE's own words and weaknesses, so `WHERE attack_vector = 'network' AND code_execution` asks for remote code execution.
 - **A CVE's file moves when its severity or type changes.** Cite it by its origin, `https://www.cve.org/CVERecord?id=<id>`, never by its path.
 - **Whether a CVE affects this code is a question for the code.** Start from `cve_dependency_findings('file:///**')` or the CVE's packages. It matches packages by name, so a component a package embeds, such as a native library or a runtime, is found only by searching the CVEs' products and descriptions. Then read its `fix-<n>` nodes to learn the vulnerable function, and trace that function through the workspace with `explore` and its references.
