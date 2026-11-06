@@ -7280,7 +7280,7 @@
      }
     },
     "concepts": 3,
-    "terms": 16,
+    "terms": 17,
     "views": {
      "cve_vulnerabilities": {
       "rows": 6,
@@ -7881,6 +7881,212 @@
         "id": "CWE-400",
         "cves": 2
        }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a CVE arrives whose numbering authority writes its versions across two lines: its product, headline and structure each hold them on one",
+   "clock": "2026-11-05T17:00:00Z",
+   "pass": "incremental",
+   "interactions": [
+    {
+     "method": "GET",
+     "status": 200,
+     "headers": {
+      "content-type": "application/json"
+     },
+     "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?lastModStartDate=2026-11-05T15%3A02%3A10.880Z&lastModEndDate=2026-11-05T17%3A00%3A00.000Z&resultsPerPage=200&startIndex=0",
+     "json": {
+      "resultsPerPage": 1,
+      "startIndex": 0,
+      "totalResults": 1,
+      "format": "NVD_CVE",
+      "version": "2.0",
+      "timestamp": "2026-11-05T17:00:00",
+      "vulnerabilities": [
+       {
+        "cve": {
+         "id": "CVE-2026-111094",
+         "sourceIdentifier": "cve@jetbrains.com",
+         "published": "2026-10-15T16:17:48.993",
+         "lastModified": "2026-11-05T16:30:00.000",
+         "vulnStatus": "Analyzed",
+         "cveTags": [],
+         "descriptions": [
+          {
+           "lang": "en",
+           "value": "In JetBrains TeamCity before 2026.2, \n2026.1.4, \n2025.11.8 remote code execution via a whitelist bypass in the build messages protocol was possible"
+          }
+         ],
+         "affected": [
+          {
+           "source": "cve@jetbrains.com",
+           "affectedData": [
+            {
+             "vendor": "JetBrains",
+             "product": "TeamCity",
+             "defaultStatus": "unaffected",
+             "versions": [
+              {
+               "version": "0",
+               "lessThan": "2026.2, \n2026.1.4, \n2025.11.8",
+               "versionType": "semver",
+               "status": "affected"
+              }
+             ]
+            }
+           ]
+          }
+         ],
+         "metrics": {
+          "cvssMetricV31": [
+           {
+            "source": "cve@jetbrains.com",
+            "type": "Secondary",
+            "cvssData": {
+             "version": "3.1",
+             "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
+             "baseScore": 8.1,
+             "baseSeverity": "HIGH",
+             "attackVector": "NETWORK",
+             "attackComplexity": "HIGH",
+             "privilegesRequired": "NONE",
+             "userInteraction": "NONE",
+             "scope": "UNCHANGED",
+             "confidentialityImpact": "HIGH",
+             "integrityImpact": "HIGH",
+             "availabilityImpact": "HIGH"
+            },
+            "exploitabilityScore": 2.2,
+            "impactScore": 5.9
+           },
+           {
+            "source": "nvd@nist.gov",
+            "type": "Primary",
+            "cvssData": {
+             "version": "3.1",
+             "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+             "baseScore": 9.8,
+             "baseSeverity": "CRITICAL",
+             "attackVector": "NETWORK",
+             "attackComplexity": "LOW",
+             "privilegesRequired": "NONE",
+             "userInteraction": "NONE",
+             "scope": "UNCHANGED",
+             "confidentialityImpact": "HIGH",
+             "integrityImpact": "HIGH",
+             "availabilityImpact": "HIGH"
+            },
+            "exploitabilityScore": 3.9,
+            "impactScore": 5.9
+           }
+          ],
+          "ssvcV203": [
+           {
+            "source": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+            "ssvcData": {
+             "timestamp": "2026-10-15T00:00:00+00:00",
+             "id": "CVE-2026-111094",
+             "options": [
+              {
+               "exploitation": "none"
+              },
+              {
+               "automatable": "no"
+              },
+              {
+               "technicalImpact": "total"
+              }
+             ],
+             "role": "CISA Coordinator",
+             "version": "2.0.3"
+            }
+           }
+          ]
+         },
+         "weaknesses": [
+          {
+           "source": "cve@jetbrains.com",
+           "type": "Secondary",
+           "description": [
+            {
+             "lang": "en",
+             "value": "CWE-502"
+            }
+           ]
+          }
+         ],
+         "configurations": [
+          {
+           "nodes": [
+            {
+             "operator": "OR",
+             "negate": false,
+             "cpeMatch": [
+              {
+               "vulnerable": true,
+               "criteria": "cpe:2.3:a:jetbrains:teamcity:*:*:*:*:*:*:*:*",
+               "versionEndExcluding": "2025.11.8",
+               "matchCriteriaId": "90B7BA91-8570-4A95-9C06-ABC6182E00A8"
+              },
+              {
+               "vulnerable": true,
+               "criteria": "cpe:2.3:a:jetbrains:teamcity:*:*:*:*:*:*:*:*",
+               "versionStartIncluding": "2026.1",
+               "versionEndExcluding": "2026.1.4",
+               "matchCriteriaId": "E68D7A2A-EDCD-4BEF-B205-F6000B6A9AA9"
+              }
+             ]
+            }
+           ]
+          }
+         ],
+         "references": [
+          {
+           "url": "https://www.jetbrains.com/privacy-security/issues-fixed/",
+           "source": "cve@jetbrains.com",
+           "tags": [
+            "Vendor Advisory"
+           ]
+          }
+         ]
+        }
+       }
+      ]
+     }
+    },
+    {
+     "method": "GET",
+     "url": "https://api.first.org/data/v1/epss?limit=1&offset=0",
+     "status": 200,
+     "json": {
+      "status": "OK",
+      "status-code": 200,
+      "version": "1.0",
+      "access": "public",
+      "total": 400189,
+      "offset": 0,
+      "limit": 1,
+      "data": [
+       {
+        "cve": "CVE-2026-59822",
+        "epss": "0.008360000",
+        "percentile": "0.578290000",
+        "date": "2026-11-04"
+       }
+      ]
+     }
+    }
+   ],
+   "expect": {
+    "paths": {
+     "cves/2026-10/high/devtools/jetbrains/teamcity/CVE-2026-111094.rqlobject": {
+      "contains": [
+       "\"type\":\"devtools\"",
+       "\"versions\":[\"before 2026.2, 2026.1.4, 2025.11.8\"]",
+       "JetBrains TeamCity — before 2026.2, 2026.1.4, 2025.11.8"
       ]
      }
     }
@@ -13917,6 +14123,9 @@
       "absent": true
      },
      "cves/2026-11/low/unclassified/delgan/loguru/CVE-2026-120217.rqlobject": {
+      "absent": true
+     },
+     "cves/2026-10/high/devtools/jetbrains/teamcity/CVE-2026-111094.rqlobject": {
       "absent": true
      },
      "rejected/CVE-2026-80726.rqlobject": {

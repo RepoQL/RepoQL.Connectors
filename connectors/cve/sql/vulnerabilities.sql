@@ -1,4 +1,4 @@
--- One row per CVE of the cve import: its id, NVD status, when NVD published and last modified it, the month and severity its path is filed under, the CVSS score that sets the severity with its version, vector and scorer (cna, cisa or nvd), the type of software it is in with type_rule naming the rule that decided it (model when no rule recognised it, with type_confidence; type is unclassified when neither could say), its attack_vector from the CVSS vector (network, adjacent, local or physical), and code_execution, true when its description or a weakness it names says it runs an attacker's code, the vendor and product its numbering authority names, its package URLs and weaknesses, and whether CISA lists it as known exploited, since when and with action due when. Lists are VARCHAR[], instants UTC TIMESTAMPs. uri is the CVE's object, whose nodes product-<n>, score-<n> and fix-<n> hold its products, every party's score, and its fixes.
+-- One row per CVE of the cve import: its id, NVD status, when NVD published and last modified it, the month and severity its path is filed under, the CVSS score that sets the severity with its version, vector and scorer (cna, cisa or nvd), the type of software it is in with type_rule naming the rule that decided it (model when no rule recognised it, with type_confidence; type is unclassified when neither could say), its attack_vector from the CVSS vector (network, adjacent, local or physical), and code_execution, true when its description or a weakness it names says it runs an attacker's code, the vendor and product its numbering authority names, its package URLs and weaknesses, and whether CISA lists it as known exploited, since when and with action due when, and CISA's SSVC decision: exploitation (none, poc when an exploit is public, or active), automatable (yes or no) and technical_impact (partial or total), null where CISA has not decided. products_from is cpe when the record's numbering authority named no product, and vendor and product are then NVD's CPE names. Lists are VARCHAR[], instants UTC TIMESTAMPs. uri is the CVE's object, whose nodes product-<n>, score-<n> and fix-<n> hold its products, every party's score, and its fixes.
 view
 SELECT json_extract_string(properties, '$.id') AS id,
        json_extract_string(properties, '$.status') AS status,
@@ -22,6 +22,10 @@ SELECT json_extract_string(properties, '$.id') AS id,
        COALESCE(TRY_CAST(json_extract_string(properties, '$.known_exploited') AS BOOLEAN), false) AS known_exploited,
        TRY_CAST(json_extract_string(properties, '$.kev_added') AS DATE) AS kev_added,
        TRY_CAST(json_extract_string(properties, '$.kev_due') AS DATE) AS kev_due,
+       json_extract_string(properties, '$.exploitation') AS exploitation,
+       json_extract_string(properties, '$.automatable') AS automatable,
+       json_extract_string(properties, '$.technical_impact') AS technical_impact,
+       json_extract_string(properties, '$.products_from') AS products_from,
        headline,
        uri
 FROM rqlobject_documents

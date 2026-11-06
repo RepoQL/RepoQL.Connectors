@@ -48,6 +48,8 @@ const SHAREPOINT = real('CVE-2026-56164');   // the numbering authority says 5.3
 const REJECTED = real('CVE-2026-80726');     // withdrawn by its numbering authority
 const LOGURU = real('CVE-2026-120217');      // arrives late, and the model cannot answer it
 const LOG4J = real('CVE-2021-44228');        // published years before any window, and known exploited
+const PHP = real('CVE-2012-1823');           // known exploited, from before numbering authorities named products: only NVD's CPEs do, and NVD lists 29 of its references twice
+const TEAMCITY = real('CVE-2026-111094');     // its numbering authority writes the affected versions across two lines
 
 // The numbering authority scores the Perl package: the shape of a CNA's CVSS 3.1 metric as NVD carries it.
 const BROTLI_SCORED = structuredClone(BROTLI);
@@ -60,6 +62,10 @@ BROTLI_SCORED.cve.metrics = { cvssMetricV31: [{ source: BROTLI.cve.sourceIdentif
 // The loguru CVE reaches NVD's modified listing late, as a CVE NVD receives after the last pass does.
 const LOGURU_LATE = structuredClone(LOGURU);
 LOGURU_LATE.cve.lastModified = '2026-11-05T15:02:10.880';
+
+// The TeamCity CVE reaches NVD's modified listing after the last pass, as the loguru one does.
+const TEAMCITY_LATE = structuredClone(TEAMCITY);
+TEAMCITY_LATE.cve.lastModified = '2026-11-05T16:30:00.000';
 
 // The plugin's CVE is rejected: the shape of CVE-2026-80726, NVD's own rejected record.
 const PLUGIN_REJECTED = { cve: { id: PLUGIN.cve.id, sourceIdentifier: PLUGIN.cve.sourceIdentifier, published: PLUGIN.cve.published,
@@ -169,7 +175,9 @@ const PLUGIN_PATH = 'cves/2026-11/medium/cms/unknown/media-library-assistant/CVE
 const LITELLM_PATH = 'cves/2026-07/high/ai/berriai/litellm/CVE-2026-59822.rqlobject';
 const SHAREPOINT_PATH = 'cves/2026-07/medium/cms/microsoft/microsoft-sharepoint-enterprise-server-2016/CVE-2026-56164.rqlobject';
 const LOGURU_PATH = 'cves/2026-11/low/unclassified/delgan/loguru/CVE-2026-120217.rqlobject';
+const TEAMCITY_PATH = 'cves/2026-10/high/devtools/jetbrains/teamcity/CVE-2026-111094.rqlobject';
 const LOG4J_PATH = 'cves/2021-12/critical/libraries/apache-software-foundation/apache-log4j2/CVE-2021-44228.rqlobject';
+const PHP_PATH = 'cves/2012-05/critical/runtimes/php/php/CVE-2012-1823.rqlobject';
 const origin = id => `https://www.cve.org/CVERecord?id=${id}`;
 
 const G1 = '2026-11-05T06:00:00Z';
@@ -215,7 +223,7 @@ const suite = {
           'weaknesses/README.md': { contains: ['# CWE weaknesses', 'content version 4.21 of 2026-10-28', 'Copyright © 2006–2026, The MITRE Corporation'] },
           'types/devices.md': { contains: ['1 CVEs, at `cves/*/*/devices/**`'] },
         },
-        concepts: 3, terms: 16,
+        concepts: 3, terms: 17,
         views: {
           cve_vulnerabilities: { rows: 6, contains: [{ id: 'CVE-2026-120189', severity: 'critical', type: 'devices' }] },
           cve_known_exploited: { rows: 3, contains: [{ id: 'CVE-2026-59822' }, { id: 'CVE-2026-56164' }, { id: 'CVE-2021-44228' }] },
@@ -266,6 +274,14 @@ const suite = {
       },
     },
     {
+      name: 'a CVE arrives whose numbering authority writes its versions across two lines: its product, headline and structure each hold them on one',
+      clock: '2026-11-05T17:00:00Z', pass: 'incremental',
+      interactions: [...changedSince('2026-11-05T15:02:10.880Z', '2026-11-05T17:00:00Z', [TEAMCITY_LATE]), epssDay],
+      expect: {
+        paths: { [TEAMCITY_PATH]: { contains: ['"type":"devtools"', '"versions":["before 2026.2, 2026.1.4, 2025.11.8"]', 'JetBrains TeamCity — before 2026.2, 2026.1.4, 2025.11.8'] } },
+      },
+    },
+    {
       name: 'cve_affects asks OSV which advisories name a package version, and an unnamed one has none',
       clock: '2026-11-05T17:30:00Z', pass: 'none',
       interactions: [{ method: 'POST', url: OSV_BATCH, status: 200,
@@ -289,7 +305,7 @@ const suite = {
       expect: {
         collections: { cves: 3, epss: 3, labels: 3, placed: 3, weaknesses: CWE_ENTRIES },
         paths: {
-          [BROTLI_HIGH]: { absent: true }, [LOGURU_PATH]: { absent: true },
+          [BROTLI_HIGH]: { absent: true }, [LOGURU_PATH]: { absent: true }, [TEAMCITY_PATH]: { absent: true },
           'rejected/CVE-2026-80726.rqlobject': { absent: true }, 'rejected/CVE-2026-113482.rqlobject': { absent: true },
           [LITELLM_PATH]: { contains: ['"known_exploited":true'] }, [LOG4J_PATH]: { contains: ['"known_exploited":true'] },
           'overview.md': { contains: ['the CVEs published in the last 30 days, and every CVE CISA lists as known exploited, whatever its age: 3 CVEs'] },
@@ -300,7 +316,7 @@ const suite = {
 };
 
 // The import cve://kev: only the known exploited, whatever their age, and every listing asks NVD for those alone.
-const KEV_RECORDS = [LITELLM, SHAREPOINT, LOG4J];
+const KEV_RECORDS = [LITELLM, SHAREPOINT, LOG4J, PHP];
 const KEV_WATERMARK = newest(KEV_RECORDS);
 const kevSuite = {
   import: 'cve://kev',
@@ -312,15 +328,17 @@ const kevSuite = {
       clock: G1, pass: 'full',
       interactions: [knownExploited(G1, [BROTLI, DLINK, ...KEV_RECORDS]), ...cweRead, epssPages],
       expect: {
-        collections: { cves: 3, epss: 3, labels: 3, placed: 3 },
+        collections: { cves: 4, epss: 3, labels: 4, placed: 4 },
         rows: { 'state/watermark': { value: { modified: KEV_WATERMARK } } },
         paths: {
           [LOG4J_PATH]: { origin: origin('CVE-2021-44228'), contains: ['"known_exploited":true', 'cve.known-exploited'] },
+          [PHP_PATH]: { origin: origin('CVE-2012-1823'), contains: ['"vendor":"php"', '"product":"php"', '"products_from":"cpe"', '"from":"cpe"', 'php php — before 5.3.12; 5.4.0 up to 5.4.2',
+            '"type":"runtimes"', '"type_rule":"name:runtimes"', '"exploitation":"active"', '"automatable":"yes"', '"technical_impact":"total"', 'known exploited since 2022-03-25 · automatable', 'weaknesses/CWE-77.rqlobject'] },
           'scores/epss.csv': { contains: ['CVE-2021-44228,0.99999,1,2026-11-04'] },
           [LITELLM_PATH]: { contains: ['"known_exploited":true'] }, [SHAREPOINT_PATH]: { contains: ['"known_exploited":true'] },
-          'overview.md': { contains: ['# CVEs known to be exploited', 'This import holds the CVEs CISA lists as known exploited, whatever their age: 3 CVEs'] },
+          'overview.md': { contains: ['# CVEs known to be exploited', 'This import holds the CVEs CISA lists as known exploited, whatever their age: 4 CVEs'] },
         },
-        views: { cve_known_exploited: { rows: 3 } },
+        views: { cve_known_exploited: { rows: 4 }, cve_vulnerabilities: { contains: [{ id: 'CVE-2012-1823', vendor: 'php', exploitation: 'active', products_from: 'cpe' }] } },
       },
     },
     {
@@ -332,9 +350,9 @@ const kevSuite = {
     {
       name: 'a week later, NVD no longer lists the SharePoint CVE as known exploited, and MITRE renames CWE-306: the CVE leaves, and the LiteLLM CVE, unchanged itself, names CWE-306 by its new name',
       clock: '2026-11-12T06:00:00Z', pass: 'full',
-      interactions: [knownExploited('2026-11-12T06:00:00Z', [LITELLM, LOG4J]), ...cweReadRenaming(306, 'Missing Authentication for a Critical Function'), epssPages],
+      interactions: [knownExploited('2026-11-12T06:00:00Z', [LITELLM, LOG4J, PHP]), ...cweReadRenaming(306, 'Missing Authentication for a Critical Function'), epssPages],
       expect: {
-        collections: { cves: 2, epss: 2, labels: 2, placed: 2 },
+        collections: { cves: 3, epss: 2, labels: 3, placed: 3 },
         paths: { [SHAREPOINT_PATH]: { absent: true }, [LOG4J_PATH]: { contains: ['"known_exploited":true'] },
           [LITELLM_PATH]: { contains: ['CWE-306 Missing Authentication for a Critical Function'] } },
       },
@@ -342,10 +360,10 @@ const kevSuite = {
     {
       name: 'a week on, MITRE answers a pillar\'s descendants with an empty object: the pass fails, and every weakness stays',
       clock: '2026-11-19T06:00:00Z', pass: 'full',
-      interactions: [knownExploited('2026-11-19T06:00:00Z', [LITELLM, LOG4J]), ...cweRead.slice(0, 3),
+      interactions: [knownExploited('2026-11-19T06:00:00Z', [LITELLM, LOG4J, PHP]), ...cweRead.slice(0, 3),
         ...CWE_FIXTURE.view.Views[0].Members.map(member => cweGet(`${CWE}/${member.CweID}/descendants?view=1000`, {})),
         // Were the empty trees believed, every weakness the held CVEs name would be read alone, and MITRE has none.
-        ...[20, 287, 306, 400, 502, 917].map(id => ({ method: 'GET', url: `${CWE}/weakness/${id}`, status: 404, headers: { 'content-type': 'application/json' }, json: `for weakness: cwe (${id}) not found` })),
+        ...[20, 77, 287, 306, 400, 502, 917].map(id => ({ method: 'GET', url: `${CWE}/weakness/${id}`, status: 404, headers: { 'content-type': 'application/json' }, json: `for weakness: cwe (${id}) not found` })),
         epssPages],
       expect: { failed: true, collections: { weaknesses: CWE_ENTRIES }, paths: { 'weaknesses/CWE-1333.rqlobject': { contains: ['"kind":"weakness.base"'] } } },
     },
