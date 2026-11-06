@@ -17,9 +17,9 @@ jobs:
     name: Test every connector
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
 
@@ -67,11 +67,11 @@ jobs:
       group: feed
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
 
@@ -109,7 +109,7 @@ jobs:
             if [ -f "$index" ] && node -e "process.exit(JSON.parse(require('fs').readFileSync(process.argv[1])).versions.includes(process.argv[2].toLowerCase()) ? 0 : 1)" "$index" "$version"; then
               # A published version never changes: a connector that changed must raise its version.
               if [ -n "$BEFORE" ] && ! echo "$BEFORE" | grep -qE '^0+$' && ! git diff --quiet "$BEFORE" HEAD -- "$folder"; then
-                echo "::error::$name changed, but $id $version is already published. Raise package.version in $folder/manifest.yaml."
+                echo "::error::$name changed, but $id $version is already published. Raise package.version in ${folder}manifest.yaml."
                 status=1
               else
                 echo "$id $version is already published."
