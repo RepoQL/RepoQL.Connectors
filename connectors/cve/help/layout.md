@@ -5,7 +5,7 @@ tags: [cve, cwe, weakness, weaknesses, cwe_weaknesses, vulnerability, vulnerabil
 
 # Asking a cve import
 
-An import of `cve://recent` holds each CVE published in the last year, and every CVE CISA lists as known exploited whatever its age, as an RQL object. An import of `cve://kev` holds only the known exploited. CISA's listing can lag a CVE's publication by days or weeks, so a new critical CVE can be in `cve://recent` before it is in `cve://kev`. The path files each one by when it was published, how severe it is, and what type of software it is in:
+An import of `cve://recent` holds each CVE published in the last 30 days, or the window its copy of the connector states, and every CVE CISA lists as known exploited whatever its age, as an RQL object. An import of `cve://kev` holds only the known exploited. CISA's listing can lag a CVE's publication by days or weeks, so a new critical CVE can be in `cve://recent` before it is in `cve://kev`. The path files each one by when it was published, how severe it is, and what type of software it is in:
 
 ```
 cve://recent/cves/<YYYY-MM>/<severity>/<type>/<vendor>/<product>/<CVE id>.rqlobject

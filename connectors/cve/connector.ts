@@ -1,4 +1,4 @@
-// The CVE connector. It copies the CVEs published in the last year into an import whose tree answers a security
+// The CVE connector. It copies the CVEs published in the last 30 days into an import whose tree answers a security
 // engineer's first questions by its paths alone: what was reported this month, what of it is critical, and what kind
 // of software it is in. README.md states the questions it serves, and why it reads the sources it does.
 //
@@ -53,8 +53,9 @@ import { Connector, InvalidImport, RateLimited, canonicalAddress, compareInstant
 
 // How many days back cve://recent holds CVEs, by the day NVD published them. It holds every CVE CISA lists as known
 // exploited whatever its age, and cve://kev holds only those, so the window decides only the rest. A first read of a
-// year is about 210,000 CVEs and 1,050 requests to NVD; of 30 days, about 17,000 and 90.
-const WINDOW_DAYS = 365;
+// 30 days is about 17,000 CVEs and 90 requests to NVD, and a year about 210,000 and 1,050. A wider window costs more
+// at its first read, and the model is asked about roughly 29% of the CVEs it adds.
+const WINDOW_DAYS = 30;
 
 // The types of software whose CVEs are written as files, or undefined for every type, such as
 // new Set(['libraries', 'frameworks', 'runtimes']). The rest stay in the import's database. A CVE neither the rules nor

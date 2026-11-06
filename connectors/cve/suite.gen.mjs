@@ -104,7 +104,7 @@ const knownExploited = (now, records) => ({
 });
 
 // A full pass of cve://recent lists the window, then the known exploited.
-const firstRead = (now, records, days = 365) => [...listing('pub', iso(Date.parse(now) - days * DAY_MS), now, records, 'published'), knownExploited(now, records)];
+const firstRead = (now, records, days = 30) => [...listing('pub', iso(Date.parse(now) - days * DAY_MS), now, records, 'published'), knownExploited(now, records)];
 const changedSince = (watermark, now, records, kev = false) => listing('lastMod', watermark, now, records, 'lastModified', kev);
 const newest = records => records.map(record => `${record.cve.lastModified}Z`).sort().at(-1);
 
@@ -177,7 +177,7 @@ const WATERMARK = '2026-11-02T19:35:33.347Z';
 
 const suite = {
   import: 'cve://recent',
-  description: 'The CVE connector over NVD, as the import cve://recent: a first read of the year\'s window and of every known exploited CVE, in which the model reads every CVE and each is filed by month, severity and type; two hours with nothing new; a numbering authority scores a CVE, which moves it; a CVE is rejected, which moves it to rejected/; NVD fails, which removes nothing; a CVE the model cannot read yet arrives unclassified; cve_affects asks OSV about a package version, and follows OSV\'s page token; and a year later a full pass removes every CVE that left the window, but keeps the known exploited.',
+  description: 'The CVE connector over NVD, as the import cve://recent: a first read of the 30-day window and of every known exploited CVE, in which the model reads every CVE and each is filed by month, severity and type; two hours with nothing new; a numbering authority scores a CVE, which moves it; a CVE is rejected, which moves it to rejected/; NVD fails, which removes nothing; a CVE the model cannot read yet arrives unclassified; cve_affects asks OSV about a package version, and follows OSV\'s page token; and a year later a full pass removes every CVE that left the window, but keeps the known exploited.',
   answers: [
     reading(BROTLI, 'libraries', 0.15, 0.35),
     reading(DLINK, 'devices', 0.42, 0.94),
@@ -189,11 +189,11 @@ const suite = {
   ],
   generations: [
     {
-      name: 'the first read: every CVE published in the year arrives, and every known exploited one whatever its age; the model reads each, and each is filed by month, severity and type',
+      name: 'the first read: every CVE published in the 30 days arrives, and every known exploited one whatever its age; the model reads each, and each is filed by month, severity and type',
       clock: G1, pass: 'full',
       interactions: [...firstRead(G1, [BROTLI, DLINK, PLUGIN, LITELLM, SHAREPOINT, REJECTED, LOG4J]), ...cweRead, epssPages],
       expect: {
-        collections: { cves: 7, epss: 6, labels: 6, placed: 7, weaknesses: CWE_ENTRIES },
+        collections: { cves: 6, epss: 6, labels: 6, placed: 6, weaknesses: CWE_ENTRIES },
         rows: { 'state/watermark': { value: { modified: WATERMARK } }, 'state/epss': { value: { date: '2026-11-04' } }, 'state/cwe': { value: { version: '4.21 of 2026-10-28', shape: 2 } } },
         paths: {
           [BROTLI_UNSCORED]: { origin: origin('CVE-2026-115946'), contains: ['"severity":"unscored"', '"type":"libraries"', 'pkg:cpan/XS-libbrotli'] },
@@ -201,10 +201,11 @@ const suite = {
           [PLUGIN_PATH]: { contains: ['"cvss_source":"cisa"', '"severity":"medium"'] },
           [LITELLM_PATH]: { contains: ['"known_exploited":true', '"kev_added":"2026-09-02"', 'cve.known-exploited'] },
           [SHAREPOINT_PATH]: { contains: ['"cvss_score":5.3', '"cvss_source":"cna"', 'CVSS 3.1 9.8 from NVD'] },
-          'rejected/CVE-2026-80726.rqlobject': { contains: ['cve.rejected', '"kind":"vulnerability.rejected"'] },
+          // Withdrawn on 2026-09-03, before the 30-day window, and not known exploited: the import does not hold it.
+          'rejected/CVE-2026-80726.rqlobject': { absent: true },
           'scores/epss.csv': { contains: ['cve,epss,percentile,date', 'CVE-2026-120189,0.01346,0.7151,2026-11-04'] },
           [LOG4J_PATH]: { origin: origin('CVE-2021-44228'), contains: ['"known_exploited":true', '"kev_added":"2021-12-10"', '"type":"libraries"', '"type_rule":"model"', '"attack_vector":"network"', '"code_execution":true', 'network attack · code execution', 'weaknesses/CWE-400.rqlobject', 'weaknesses/CWE-502.rqlobject'] },
-          'overview.md': { contains: ['every CVE CISA lists as known exploited, whatever its age: 6 CVEs, and 1 withdrawn', '3 are known exploited'] },
+          'overview.md': { contains: ['every CVE CISA lists as known exploited, whatever its age: 6 CVEs, and 0 withdrawn', '3 are known exploited'] },
           'weaknesses/CWE-1333.rqlobject': { origin: 'https://cwe.mitre.org/data/definitions/1333.html',
             contains: ['"kind":"weakness.base"', 'CWE-1333 — Inefficient Regular Expression Complexity', '"key":"child-of-407"', '"type":"EXTENDS"', 'weaknesses/CWE-407.rqlobject',
               '"structure":"CWE-1333 Inefficient Regular Expression Complexity, also called ReDoS, Regular Expression Denial of Service, Catastrophic backtracking\\nThe product uses a regular expression with a worst-case computational complexity that is inefficient and possibly exponential.\\nbase weakness · likelihood of exploit high · leads to DoS: Resource Consumption (CPU)\\nchild of CWE-407 Inefficient Algorithmic Complexity'] },
@@ -216,7 +217,7 @@ const suite = {
         },
         concepts: 3, terms: 16,
         views: {
-          cve_vulnerabilities: { rows: 7, contains: [{ id: 'CVE-2026-120189', severity: 'critical', type: 'devices' }] },
+          cve_vulnerabilities: { rows: 6, contains: [{ id: 'CVE-2026-120189', severity: 'critical', type: 'devices' }] },
           cve_known_exploited: { rows: 3, contains: [{ id: 'CVE-2026-59822' }, { id: 'CVE-2026-56164' }, { id: 'CVE-2021-44228' }] },
           cve_packages: { rows: 1, contains: [{ purl: 'pkg:cpan/XS-libbrotli' }] },
           cve_weaknesses: { rows: CWE_ENTRIES, contains: [{ id: 'CWE-400', abstraction: 'class', cves: 1 }, { id: 'CWE-306', cves: 2 }, { id: 'CWE-1333', abstraction: 'base', cves: 0 }] },
@@ -253,7 +254,7 @@ const suite = {
       clock: '2026-11-05T14:00:00Z', pass: 'incremental',
       interactions: [{ method: 'GET', status: 503, headers: { 'content-type': 'text/html' }, text: '<html><body>Service Unavailable</body></html>',
         url: changedSince('2026-11-05T11:40:02.517Z', '2026-11-05T14:00:00Z', [])[0].url }],
-      expect: { failed: true, collections: { cves: 7 } },
+      expect: { failed: true, collections: { cves: 6 } },
     },
     {
       name: 'a CVE arrives that the model cannot read yet: it is filed as unclassified, and says so',
@@ -291,7 +292,7 @@ const suite = {
           [BROTLI_HIGH]: { absent: true }, [LOGURU_PATH]: { absent: true },
           'rejected/CVE-2026-80726.rqlobject': { absent: true }, 'rejected/CVE-2026-113482.rqlobject': { absent: true },
           [LITELLM_PATH]: { contains: ['"known_exploited":true'] }, [LOG4J_PATH]: { contains: ['"known_exploited":true'] },
-          'overview.md': { contains: ['the CVEs published in the last 365 days, and every CVE CISA lists as known exploited, whatever its age: 3 CVEs'] },
+          'overview.md': { contains: ['the CVEs published in the last 30 days, and every CVE CISA lists as known exploited, whatever its age: 3 CVEs'] },
         },
       },
     },

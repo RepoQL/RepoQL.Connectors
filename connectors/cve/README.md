@@ -1,12 +1,12 @@
 # CVE connector
 
-Copies the CVEs published in the last year, and every CVE known to be exploited, into RepoQL, beside the code they might affect. The CVEs come from NIST's National Vulnerability Database (NVD), and their exploit likelihood from FIRST's EPSS. Rules read what type of software each CVE concerns, asking a model only about the CVEs they do not recognise, and each CVE is filed by the month it was published, its severity, and that type. It is the starting point for CVE scanning with RepoQL: copy it, and change what your readers need.
+Copies the CVEs published in the last 30 days, and every CVE known to be exploited, into RepoQL, beside the code they might affect. The CVEs come from NIST's National Vulnerability Database (NVD), and their exploit likelihood from FIRST's EPSS. Rules read what type of software each CVE concerns, asking a model only about the CVEs they do not recognise, and each CVE is filed by the month it was published, its severity, and that type. It is the starting point for CVE scanning with RepoQL: copy it, and change what your readers need.
 
 ## Two imports
 
 | Import | What it holds | How big |
 |--------|---------------|---------|
-| `cve://recent` | Every CVE published in the window, exploited or not, and every CVE CISA lists as known exploited, whatever its age | About 210,000 CVEs for a year |
+| `cve://recent` | Every CVE published in the window, exploited or not, and every CVE CISA lists as known exploited, whatever its age | About 17,000 CVEs for the default 30 days, and 210,000 for a year |
 | `cve://kev` | Only the CVEs CISA lists as known exploited, whatever their age | About 1,800 CVEs |
 
 Known exploited means CISA has evidence of exploitation in the wild, and that evidence can lag publication by days or weeks. Log4Shell, CVE-2021-44228, was listed on the day it was published. PHP's CVE-2026-109618 was published on 21 October 2026, and CISA listed it on 26 October, so for five days only `cve://recent` held it. Import `cve://kev` only if you act on confirmed exploitation alone. EPSS, in `scores/epss.csv`, estimates how likely a CVE is to be exploited before anyone has seen it happen.
@@ -39,11 +39,11 @@ Two jobs, both run by an agent over an uplink that holds the organization's code
 ## What it reads, and what it sends
 
 - **What it reads.**
-  - NVD's CVE API, without a key: the CVEs published in the window and the known exploited, then every two hours those NVD modified since. It reads at most 9 requests a minute, under NVD's anonymous limit of 5 in 30 seconds. On 2026-11-05 a 30-day window held 17,425 CVEs, so a first read of a year is about 1,050 pages, which takes about two hours. `cve://kev` is about 9 pages.
+  - NVD's CVE API, without a key: the CVEs published in the window and the known exploited, then every two hours those NVD modified since. It reads at most 9 requests a minute, under NVD's anonymous limit of 5 in 30 seconds. On 2026-11-05 the 30-day window held 17,425 CVEs, so a first read is about 90 pages, which takes about ten minutes. A year is about 1,050 pages, about two hours. `cve://kev` is about 9 pages.
   - EPSS's API: 10,000 scores to a page, once a day, when EPSS publishes the day's scores.
   - OSV's batch query, only when a query calls `cve_affects`. It sends the ecosystem, package names and versions the query passes it.
   - MITRE's CWE API, on a full pass and on the first pass: every weakness and category of the CWE list, in about 22 requests.
-- **What it sends to the model.** Only for a CVE the rules cannot place, about 29% of them, once: the vendor, product and package names its numbering authority states, and its description, cut at 6,000 characters, with one question, its type. Each request is charged to the plan of whoever installed the connector. A year is about 60,000 requests, inside the 100,000 an import may have answered in a day. Until a CVE is placed, it is filed under `unclassified`. `cve://kev` is a few hundred.
+- **What it sends to the model.** Only for a CVE the rules cannot place, about 29% of them, once: the vendor, product and package names its numbering authority states, and its description, cut at 6,000 characters, with one question, its type. Each request is charged to the plan of whoever installed the connector. For the default 30 days that is about 5,000 requests, and a year about 60,000, both inside the 100,000 an import may have answered in a day. Until a CVE is placed, it is filed under `unclassified`. `cve://kev` is a few hundred.
 - **What it writes.** Nothing anywhere: every request but OSV's is a GET, and OSV's batch query only reads.
 
 ## Weaknesses
@@ -88,7 +88,7 @@ This connector is meant to be copied and changed, by editing its code rather tha
 
 | Constant | Default | What it decides |
 |----------|---------|-----------------|
-| `WINDOW_DAYS` | 365 | How many days back `cve://recent` holds CVEs. It does not change `cve://kev` |
+| `WINDOW_DAYS` | 30 | How many days back `cve://recent` holds CVEs. It does not change `cve://kev` |
 | `TYPES_WRITTEN` | every type | Which types of software are written as files, such as `new Set(['libraries', 'frameworks', 'runtimes'])`. The rest stay in the import's database |
 
 The rest is written to be read and changed too. Change the rules that read each CVE between `BEGIN RULES` and `END RULES`, the question the model is asked about the rest in `QUESTIONS`, how severity is chosen in `severityOf`, the path each CVE is filed at in `pathOf`, and what each CVE's object shows in `cveObject`. When you change what the model is asked or what a file holds, run `node suite.gen.mjs` and then the suites, as below.

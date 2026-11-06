@@ -1,6 +1,6 @@
 {
  "import": "cve://recent",
- "description": "The CVE connector over NVD, as the import cve://recent: a first read of the year's window and of every known exploited CVE, in which the model reads every CVE and each is filed by month, severity and type; two hours with nothing new; a numbering authority scores a CVE, which moves it; a CVE is rejected, which moves it to rejected/; NVD fails, which removes nothing; a CVE the model cannot read yet arrives unclassified; cve_affects asks OSV about a package version, and follows OSV's page token; and a year later a full pass removes every CVE that left the window, but keeps the known exploited.",
+ "description": "The CVE connector over NVD, as the import cve://recent: a first read of the 30-day window and of every known exploited CVE, in which the model reads every CVE and each is filed by month, severity and type; two hours with nothing new; a numbering authority scores a CVE, which moves it; a CVE is rejected, which moves it to rejected/; NVD fails, which removes nothing; a CVE the model cannot read yet arrives unclassified; cve_affects asks OSV about a package version, and follows OSV's page token; and a year later a full pass removes every CVE that left the window, but keeps the known exploited.",
  "answers": [
   {
    "decide": {
@@ -906,7 +906,7 @@
  ],
  "generations": [
   {
-   "name": "the first read: every CVE published in the year arrives, and every known exploited one whatever its age; the model reads each, and each is filed by month, severity and type",
+   "name": "the first read: every CVE published in the 30 days arrives, and every known exploited one whatever its age; the model reads each, and each is filed by month, severity and type",
    "clock": "2026-11-05T06:00:00Z",
    "pass": "full",
    "interactions": [
@@ -916,484 +916,7 @@
      "headers": {
       "content-type": "application/json"
      },
-     "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=2025-11-05T06%3A00%3A00.000Z&pubEndDate=2026-03-05T06%3A00%3A00.000Z&resultsPerPage=200&startIndex=0",
-     "json": {
-      "resultsPerPage": 0,
-      "startIndex": 0,
-      "totalResults": 0,
-      "format": "NVD_CVE",
-      "version": "2.0",
-      "timestamp": "2026-11-05T06:00:00",
-      "vulnerabilities": []
-     }
-    },
-    {
-     "method": "GET",
-     "status": 200,
-     "headers": {
-      "content-type": "application/json"
-     },
-     "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=2026-03-05T06%3A00%3A00.000Z&pubEndDate=2026-07-03T06%3A00%3A00.000Z&resultsPerPage=200&startIndex=0",
-     "json": {
-      "resultsPerPage": 0,
-      "startIndex": 0,
-      "totalResults": 0,
-      "format": "NVD_CVE",
-      "version": "2.0",
-      "timestamp": "2026-11-05T06:00:00",
-      "vulnerabilities": []
-     }
-    },
-    {
-     "method": "GET",
-     "status": 200,
-     "headers": {
-      "content-type": "application/json"
-     },
-     "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=2026-07-03T06%3A00%3A00.000Z&pubEndDate=2026-10-31T06%3A00%3A00.000Z&resultsPerPage=200&startIndex=0",
-     "json": {
-      "resultsPerPage": 3,
-      "startIndex": 0,
-      "totalResults": 3,
-      "format": "NVD_CVE",
-      "version": "2.0",
-      "timestamp": "2026-11-05T06:00:00",
-      "vulnerabilities": [
-       {
-        "cve": {
-         "id": "CVE-2026-59822",
-         "sourceIdentifier": "security-advisories@github.com",
-         "published": "2026-07-08T20:16:57.683",
-         "lastModified": "2026-10-25T17:10:00.197",
-         "vulnStatus": "Analyzed",
-         "cveTags": [],
-         "descriptions": [
-          {
-           "lang": "en",
-           "value": "LiteLLM is a proxy server (AI Gateway) to call LLM APIs in OpenAI (or native) format. Prior to 1.84.0, LiteLLM's MCP Streamable HTTP endpoint allowed an unauthenticated attacker to use a fabricated Authorization header to trigger an OAuth2 passthrough fallback path that replaced failed LiteLLM key validation with an empty UserAPIKeyAuth() object, allowing requests to reach MCP tooling without a valid LiteLLM key. This issue is fixed in version 1.84.0."
-          },
-          {
-           "lang": "es",
-           "value": "LiteLLM es un servidor proxy (AI Gateway) para llamar a las API de LLM en formato OpenAI (o nativo). Antes de la versión 1.84.0, el endpoint HTTP MCP Streamable de LiteLLM permitía a un atacante no autenticado utilizar un encabezado de autorización falsificado para activar una ruta de respaldo de paso de OAuth2 que reemplazaba la validación fallida de la clave de LiteLLM con un objeto UserAPIKeyAuth() vacío, permitiendo que las solicitudes llegaran a las herramientas de MCP sin una clave de LiteLLM válida. Este problema está solucionado en la versión 1.84.0."
-          }
-         ],
-         "affected": [
-          {
-           "source": "security-advisories@github.com",
-           "affectedData": [
-            {
-             "vendor": "BerriAI",
-             "product": "litellm",
-             "versions": [
-              {
-               "version": "< 1.84.0",
-               "status": "affected"
-              }
-             ]
-            }
-           ]
-          }
-         ],
-         "metrics": {
-          "cvssMetricV40": [
-           {
-            "source": "security-advisories@github.com",
-            "type": "Secondary",
-            "cvssData": {
-             "version": "4.0",
-             "vectorString": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:L/VA:N/SC:N/SI:N/SA:N/E:X/CR:X/IR:X/AR:X/MAV:X/MAC:X/MAT:X/MPR:X/MUI:X/MVC:X/MVI:X/MVA:X/MSC:X/MSI:X/MSA:X/S:X/AU:X/R:X/V:X/RE:X/U:X",
-             "baseScore": 8.8,
-             "baseSeverity": "HIGH",
-             "attackVector": "NETWORK",
-             "attackComplexity": "LOW",
-             "attackRequirements": "NONE",
-             "privilegesRequired": "NONE",
-             "userInteraction": "NONE",
-             "vulnConfidentialityImpact": "HIGH",
-             "vulnIntegrityImpact": "LOW",
-             "vulnAvailabilityImpact": "NONE",
-             "subConfidentialityImpact": "NONE",
-             "subIntegrityImpact": "NONE",
-             "subAvailabilityImpact": "NONE",
-             "exploitMaturity": "NOT_DEFINED",
-             "confidentialityRequirement": "NOT_DEFINED",
-             "integrityRequirement": "NOT_DEFINED",
-             "availabilityRequirement": "NOT_DEFINED",
-             "modifiedAttackVector": "NOT_DEFINED",
-             "modifiedAttackComplexity": "NOT_DEFINED",
-             "modifiedAttackRequirements": "NOT_DEFINED",
-             "modifiedPrivilegesRequired": "NOT_DEFINED",
-             "modifiedUserInteraction": "NOT_DEFINED",
-             "modifiedVulnConfidentialityImpact": "NOT_DEFINED",
-             "modifiedVulnIntegrityImpact": "NOT_DEFINED",
-             "modifiedVulnAvailabilityImpact": "NOT_DEFINED",
-             "modifiedSubConfidentialityImpact": "NOT_DEFINED",
-             "modifiedSubIntegrityImpact": "NOT_DEFINED",
-             "modifiedSubAvailabilityImpact": "NOT_DEFINED",
-             "Safety": "NOT_DEFINED",
-             "Automatable": "NOT_DEFINED",
-             "Recovery": "NOT_DEFINED",
-             "valueDensity": "NOT_DEFINED",
-             "vulnerabilityResponseEffort": "NOT_DEFINED",
-             "providerUrgency": "NOT_DEFINED"
-            }
-           }
-          ],
-          "cvssMetricV31": [
-           {
-            "source": "nvd@nist.gov",
-            "type": "Primary",
-            "cvssData": {
-             "version": "3.1",
-             "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:N",
-             "baseScore": 8.2,
-             "baseSeverity": "HIGH",
-             "attackVector": "NETWORK",
-             "attackComplexity": "LOW",
-             "privilegesRequired": "NONE",
-             "userInteraction": "NONE",
-             "scope": "UNCHANGED",
-             "confidentialityImpact": "HIGH",
-             "integrityImpact": "LOW",
-             "availabilityImpact": "NONE"
-            },
-            "exploitabilityScore": 3.9,
-            "impactScore": 4.2
-           }
-          ],
-          "ssvcV203": [
-           {
-            "source": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
-            "ssvcData": {
-             "timestamp": "2026-09-02T00:00:00+00:00",
-             "id": "CVE-2026-59822",
-             "options": [
-              {
-               "exploitation": "active"
-              },
-              {
-               "automatable": "yes"
-              },
-              {
-               "technicalImpact": "partial"
-              }
-             ],
-             "role": "CISA Coordinator",
-             "version": "2.0.3"
-            }
-           }
-          ]
-         },
-         "cisaExploitAdd": "2026-09-02",
-         "cisaActionDue": "2026-09-16",
-         "cisaRequiredAction": "Apply mitigations in accordance with vendor instructions, ensuring compliance with CISA’s BOD 26-04 Prioritizing Security Updates Based on Risk (see URL in Notes) guidance and CISA’s “Forensics Triage Requirements” (see URL in Notes). Follow applicable BOD 26-04 guidance for cloud services or discontinue use of the product if mitigations are unavailable. Stakeholders are responsible for evaluating each asset's internet exposure and ensuring adherence to BOD 26-04 patching guidelines.",
-         "cisaVulnerabilityName": "BerriAI LiteLLM Improper Authentication Vulnerability",
-         "weaknesses": [
-          {
-           "source": "security-advisories@github.com",
-           "type": "Secondary",
-           "description": [
-            {
-             "lang": "en",
-             "value": "CWE-287"
-            },
-            {
-             "lang": "en",
-             "value": "CWE-306"
-            }
-           ]
-          }
-         ],
-         "configurations": [
-          {
-           "nodes": [
-            {
-             "operator": "OR",
-             "negate": false,
-             "cpeMatch": [
-              {
-               "vulnerable": true,
-               "criteria": "cpe:2.3:a:litellm:litellm:*:*:*:*:*:*:*:*",
-               "versionEndExcluding": "1.84.0",
-               "matchCriteriaId": "0432AF82-95FD-4358-9414-7B41889CEFD2"
-              }
-             ]
-            }
-           ]
-          }
-         ],
-         "references": [
-          {
-           "url": "https://github.com/BerriAI/litellm/commit/73869f0faf7d11ee21adcb5f91b8c33a340b6c2c",
-           "source": "security-advisories@github.com",
-           "tags": [
-            "Patch"
-           ]
-          },
-          {
-           "url": "https://github.com/BerriAI/litellm/pull/26463",
-           "source": "security-advisories@github.com",
-           "tags": [
-            "Issue Tracking",
-            "Patch"
-           ]
-          },
-          {
-           "url": "https://github.com/BerriAI/litellm/releases/tag/v1.84.0",
-           "source": "security-advisories@github.com",
-           "tags": [
-            "Product",
-            "Release Notes"
-           ]
-          },
-          {
-           "url": "https://github.com/BerriAI/litellm/security/advisories/GHSA-7488-6r32-c95q",
-           "source": "security-advisories@github.com",
-           "tags": [
-            "Mitigation",
-            "Patch",
-            "Vendor Advisory"
-           ]
-          },
-          {
-           "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2026-59822",
-           "source": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
-           "tags": [
-            "US Government Resource"
-           ]
-          },
-          {
-           "url": "https://www.wiz.io/blog/ai-infrastructure-honeypot",
-           "source": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
-           "tags": [
-            "Third Party Advisory"
-           ]
-          }
-         ]
-        }
-       },
-       {
-        "cve": {
-         "id": "CVE-2026-56164",
-         "sourceIdentifier": "secure@microsoft.com",
-         "published": "2026-07-14T17:17:09.907",
-         "lastModified": "2026-07-14T21:10:41.693",
-         "vulnStatus": "Analyzed",
-         "cveTags": [],
-         "descriptions": [
-          {
-           "lang": "en",
-           "value": "Missing authentication for critical function in Microsoft Office SharePoint allows an unauthorized attacker to elevate privileges over a network."
-          }
-         ],
-         "affected": [
-          {
-           "source": "secure@microsoft.com",
-           "affectedData": [
-            {
-             "vendor": "Microsoft",
-             "product": "Microsoft SharePoint Enterprise Server 2016",
-             "platforms": [
-              "x64-based Systems"
-             ],
-             "versions": [
-              {
-               "version": "16.0.0",
-               "lessThan": "16.0.5561.1001",
-               "versionType": "custom",
-               "status": "affected"
-              }
-             ]
-            },
-            {
-             "vendor": "Microsoft",
-             "product": "Microsoft SharePoint Server 2019",
-             "platforms": [
-              "x64-based Systems"
-             ],
-             "versions": [
-              {
-               "version": "16.0.0",
-               "lessThan": "16.0.10417.20175",
-               "versionType": "custom",
-               "status": "affected"
-              }
-             ]
-            },
-            {
-             "vendor": "Microsoft",
-             "product": "Microsoft SharePoint Server Subscription Edition",
-             "platforms": [
-              "x64-based Systems"
-             ],
-             "versions": [
-              {
-               "version": "16.0.0",
-               "lessThan": "16.0.19725.20434",
-               "versionType": "custom",
-               "status": "affected"
-              }
-             ]
-            }
-           ]
-          }
-         ],
-         "metrics": {
-          "cvssMetricV31": [
-           {
-            "source": "secure@microsoft.com",
-            "type": "Secondary",
-            "cvssData": {
-             "version": "3.1",
-             "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N",
-             "baseScore": 5.3,
-             "baseSeverity": "MEDIUM",
-             "attackVector": "NETWORK",
-             "attackComplexity": "LOW",
-             "privilegesRequired": "NONE",
-             "userInteraction": "NONE",
-             "scope": "UNCHANGED",
-             "confidentialityImpact": "NONE",
-             "integrityImpact": "LOW",
-             "availabilityImpact": "NONE"
-            },
-            "exploitabilityScore": 3.9,
-            "impactScore": 1.4
-           },
-           {
-            "source": "nvd@nist.gov",
-            "type": "Primary",
-            "cvssData": {
-             "version": "3.1",
-             "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
-             "baseScore": 9.8,
-             "baseSeverity": "CRITICAL",
-             "attackVector": "NETWORK",
-             "attackComplexity": "LOW",
-             "privilegesRequired": "NONE",
-             "userInteraction": "NONE",
-             "scope": "UNCHANGED",
-             "confidentialityImpact": "HIGH",
-             "integrityImpact": "HIGH",
-             "availabilityImpact": "HIGH"
-            },
-            "exploitabilityScore": 3.9,
-            "impactScore": 5.9
-           }
-          ],
-          "ssvcV203": [
-           {
-            "source": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
-            "ssvcData": {
-             "timestamp": "2026-07-14T18:45:11.388695Z",
-             "id": "CVE-2026-56164",
-             "options": [
-              {
-               "exploitation": "active"
-              },
-              {
-               "automatable": "yes"
-              },
-              {
-               "technicalImpact": "partial"
-              }
-             ],
-             "role": "CISA Coordinator",
-             "version": "2.0.3"
-            }
-           }
-          ]
-         },
-         "cisaExploitAdd": "2026-07-14",
-         "cisaActionDue": "2026-07-17",
-         "cisaRequiredAction": "Apply mitigations in accordance with vendor instructions, ensuring compliance with CISA’s BOD 26-04 Prioritizing Security Updates Based on Risk (see URL in Notes) guidance and CISA’s “Forensics Triage Requirements” (see URL in Notes). Follow applicable BOD 26-04 guidance for cloud services or discontinue use of the product if mitigations are unavailable. Stakeholders are responsible for evaluating each asset's internet exposure and ensuring adherence to BOD 26-04 patching guidelines.",
-         "cisaVulnerabilityName": "Microsoft SharePoint Server Missing Authentication for Critical Function Vulnerability",
-         "weaknesses": [
-          {
-           "source": "secure@microsoft.com",
-           "type": "Secondary",
-           "description": [
-            {
-             "lang": "en",
-             "value": "CWE-306"
-            }
-           ]
-          }
-         ],
-         "configurations": [
-          {
-           "nodes": [
-            {
-             "operator": "OR",
-             "negate": false,
-             "cpeMatch": [
-              {
-               "vulnerable": true,
-               "criteria": "cpe:2.3:a:microsoft:sharepoint_server:*:*:*:*:subscription:*:*:*",
-               "versionEndExcluding": "16.0.19725.20434",
-               "matchCriteriaId": "5FA63EA8-B225-4E35-A6A3-DBDECF5AC4C8"
-              },
-              {
-               "vulnerable": true,
-               "criteria": "cpe:2.3:a:microsoft:sharepoint_server:2016:*:*:*:enterprise:*:*:*",
-               "matchCriteriaId": "F815EF1D-7B60-47BE-9AC2-2548F99F10E4"
-              },
-              {
-               "vulnerable": true,
-               "criteria": "cpe:2.3:a:microsoft:sharepoint_server:2019:*:*:*:*:*:*:*",
-               "matchCriteriaId": "6122D014-5BF1-4AF4-8B4D-80205ED7785E"
-              }
-             ]
-            }
-           ]
-          }
-         ],
-         "references": [
-          {
-           "url": "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2026-56164",
-           "source": "secure@microsoft.com",
-           "tags": [
-            "Vendor Advisory"
-           ]
-          },
-          {
-           "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2026-56164",
-           "source": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
-           "tags": [
-            "US Government Resource"
-           ]
-          }
-         ]
-        }
-       },
-       {
-        "cve": {
-         "id": "CVE-2026-80726",
-         "sourceIdentifier": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
-         "published": "2026-09-03T13:06:11.020",
-         "lastModified": "2026-10-20T14:17:03.400",
-         "vulnStatus": "Rejected",
-         "cveTags": [],
-         "descriptions": [
-          {
-           "lang": "en",
-           "value": "Rejected reason: This CVE ID has been rejected or withdrawn by its CVE Numbering Authority."
-          }
-         ],
-         "metrics": {},
-         "references": []
-        }
-       }
-      ]
-     }
-    },
-    {
-     "method": "GET",
-     "status": 200,
-     "headers": {
-      "content-type": "application/json"
-     },
-     "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=2026-10-31T06%3A00%3A00.000Z&pubEndDate=2026-11-05T06%3A00%3A00.000Z&resultsPerPage=200&startIndex=0",
+     "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=2026-10-06T06%3A00%3A00.000Z&pubEndDate=2026-11-05T06%3A00%3A00.000Z&resultsPerPage=200&startIndex=0",
      "json": {
       "resultsPerPage": 3,
       "startIndex": 0,
@@ -7623,10 +7146,10 @@
    ],
    "expect": {
     "collections": {
-     "cves": 7,
+     "cves": 6,
      "epss": 6,
      "labels": 6,
-     "placed": 7,
+     "placed": 6,
      "weaknesses": 22
     },
     "rows": {
@@ -7686,10 +7209,7 @@
       ]
      },
      "rejected/CVE-2026-80726.rqlobject": {
-      "contains": [
-       "cve.rejected",
-       "\"kind\":\"vulnerability.rejected\""
-      ]
+      "absent": true
      },
      "scores/epss.csv": {
       "contains": [
@@ -7713,7 +7233,7 @@
      },
      "overview.md": {
       "contains": [
-       "every CVE CISA lists as known exploited, whatever its age: 6 CVEs, and 1 withdrawn",
+       "every CVE CISA lists as known exploited, whatever its age: 6 CVEs, and 0 withdrawn",
        "3 are known exploited"
       ]
      },
@@ -7763,7 +7283,7 @@
     "terms": 16,
     "views": {
      "cve_vulnerabilities": {
-      "rows": 7,
+      "rows": 6,
       "contains": [
        {
         "id": "CVE-2026-120189",
@@ -8121,7 +7641,7 @@
    "expect": {
     "failed": true,
     "collections": {
-     "cves": 7
+     "cves": 6
     }
    }
   },
@@ -8489,58 +8009,7 @@
      "headers": {
       "content-type": "application/json"
      },
-     "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=2026-11-12T06%3A00%3A00.000Z&pubEndDate=2027-03-12T06%3A00%3A00.000Z&resultsPerPage=200&startIndex=0",
-     "json": {
-      "resultsPerPage": 0,
-      "startIndex": 0,
-      "totalResults": 0,
-      "format": "NVD_CVE",
-      "version": "2.0",
-      "timestamp": "2027-11-12T06:00:00",
-      "vulnerabilities": []
-     }
-    },
-    {
-     "method": "GET",
-     "status": 200,
-     "headers": {
-      "content-type": "application/json"
-     },
-     "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=2027-03-12T06%3A00%3A00.000Z&pubEndDate=2027-07-10T06%3A00%3A00.000Z&resultsPerPage=200&startIndex=0",
-     "json": {
-      "resultsPerPage": 0,
-      "startIndex": 0,
-      "totalResults": 0,
-      "format": "NVD_CVE",
-      "version": "2.0",
-      "timestamp": "2027-11-12T06:00:00",
-      "vulnerabilities": []
-     }
-    },
-    {
-     "method": "GET",
-     "status": 200,
-     "headers": {
-      "content-type": "application/json"
-     },
-     "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=2027-07-10T06%3A00%3A00.000Z&pubEndDate=2027-11-07T06%3A00%3A00.000Z&resultsPerPage=200&startIndex=0",
-     "json": {
-      "resultsPerPage": 0,
-      "startIndex": 0,
-      "totalResults": 0,
-      "format": "NVD_CVE",
-      "version": "2.0",
-      "timestamp": "2027-11-12T06:00:00",
-      "vulnerabilities": []
-     }
-    },
-    {
-     "method": "GET",
-     "status": 200,
-     "headers": {
-      "content-type": "application/json"
-     },
-     "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=2027-11-07T06%3A00%3A00.000Z&pubEndDate=2027-11-12T06%3A00%3A00.000Z&resultsPerPage=200&startIndex=0",
+     "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=2027-10-13T06%3A00%3A00.000Z&pubEndDate=2027-11-12T06%3A00%3A00.000Z&resultsPerPage=200&startIndex=0",
      "json": {
       "resultsPerPage": 0,
       "startIndex": 0,
@@ -14468,7 +13937,7 @@
      },
      "overview.md": {
       "contains": [
-       "the CVEs published in the last 365 days, and every CVE CISA lists as known exploited, whatever its age: 3 CVEs"
+       "the CVEs published in the last 30 days, and every CVE CISA lists as known exploited, whatever its age: 3 CVEs"
       ]
      }
     }
