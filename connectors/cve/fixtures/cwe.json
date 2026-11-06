@@ -1,0 +1,1984 @@
+{
+ "captured": "2026-11-05, from https://cwe-api.mitre.org/api/v1/cwe, trimmed to the weaknesses the fixture CVEs name, their ancestors in view 1000, and category 264; each record cut to the fields the connector reads, in the shape the API answers",
+ "version": {
+  "ContentVersion": "4.21",
+  "ContentDate": "2026-10-28",
+  "TotalWeaknesses": 984,
+  "TotalCategories": 431,
+  "TotalViews": 62
+ },
+ "categories": {
+  "Categories": [
+   {
+    "ID": "264",
+    "Name": "Permissions, Privileges, and Access Controls",
+    "Status": "Obsolete",
+    "Summary": "Weaknesses in this category are related to the management of permissions, privileges, and other security features that are used to perform access control."
+   }
+  ]
+ },
+ "view": {
+  "Views": [
+   {
+    "ID": "1000",
+    "Name": "Complete Weakness Hierarchy",
+    "Type": "Graph",
+    "Status": "Draft",
+    "Objective": "This view has a hierarchical organization of all weaknesses within CWE. It is intended to facilitate research into weaknesses, including their inter-dependencies, and can be leveraged to systematically identify theoretical gaps within CWE. It is mainly organized according to abstractions of behaviors and other dimensions instead of how the weaknesses can be detected or mitigated, where they appear in code, or when they are introduced in the development life cycle. By design, this view is expected to include every weakness within CWE.",
+    "Audience": [
+     {
+      "Type": "Academic Researchers",
+      "Description": "Academic researchers can use the high-level classes that lack a significant number of children to identify potential areas for future research."
+     },
+     {
+      "Type": "Vulnerability Analysts",
+      "Description": "Those who perform vulnerability discovery/analysis use this view to identify related weaknesses that might be leveraged by following relationships between higher-level classes and bases."
+     },
+     {
+      "Type": "Assessment Tool Vendors",
+      "Description": "Assessment vendors often use this view to help identify additional weaknesses that a tool may be able to detect as the relationships are more aligned with a tool's technical capabilities."
+     },
+     {
+      "Type": "Product Vendors",
+      "Description": "Product vendors can use this view to assist with mapping vulnerabilities to their root-cause weaknesses."
+     }
+    ],
+    "Members": [
+     {
+      "CweID": "284",
+      "ViewID": "1000"
+     },
+     {
+      "CweID": "664",
+      "ViewID": "1000"
+     },
+     {
+      "CweID": "707",
+      "ViewID": "1000"
+     }
+    ],
+    "MappingNotes": {
+     "Usage": "Prohibited",
+     "Rationale": "This entry is a View. Views are not weaknesses and therefore inappropriate to describe the root causes of vulnerabilities.",
+     "Comments": "Use this View or other Views to search and navigate for the appropriate weakness.",
+     "Reasons": [
+      "View"
+     ]
+    },
+    "Notes": [
+     {
+      "Type": "Relationship",
+      "Note": "\n\t\t\tThis view uses a deep hierarchical organization, with more levels of abstraction than other classification schemes. The top-level entries are called Pillars. Where possible, this view uses abstractions that do not consider particular languages, frameworks, technologies, life cycle development phases, frequency of occurrence, or types of resources. It explicitly identifies relationships that form chains and composites, which had not been a formal part of past classification efforts. Chains and composites might help explain why mutual exclusivity is difficult to achieve within security error taxonomies. This view is roughly aligned with CWE's original research into vulnerability theory, especially with respect to behaviors and resources. Ideally, this view will only cover weakness-to-weakness relationships, with minimal overlap and zero groupings.  It is expected to include at least one parent/child relationship for every active (non-deprecated) weakness within CWE.\t\t\t"
+     }
+    ],
+    "ContentHistory": [
+     {
+      "Type": "Submission",
+      "SubmissionName": "CWE Content Team",
+      "SubmissionOrganization": "MITRE",
+      "SubmissionDate": "2008-04-11",
+      "SubmissionVersion": "Draft 9",
+      "SubmissionReleaseDate": "2008-04-11"
+     },
+     {
+      "Type": "Modification",
+      "ModificationName": "CWE Content Team",
+      "ModificationOrganization": "MITRE",
+      "ModificationDate": "2008-09-08",
+      "ModificationComment": "updated Description, Name, Relationships, View_Audience, View_Structure",
+      "ModificationVersion": "1.0",
+      "ModificationReleaseDate": "2008-09-09"
+     },
+     {
+      "Type": "Modification",
+      "ModificationName": "CWE Content Team",
+      "ModificationOrganization": "MITRE",
+      "ModificationDate": "2010-02-16",
+      "ModificationComment": "updated Relationships",
+      "ModificationVersion": "1.8",
+      "ModificationReleaseDate": "2010-02-16"
+     },
+     {
+      "Type": "Modification",
+      "ModificationName": "CWE Content Team",
+      "ModificationOrganization": "MITRE",
+      "ModificationDate": "2018-03-27",
+      "ModificationComment": "updated Description, Other_Notes, View_Audience",
+      "ModificationVersion": "3.1",
+      "ModificationReleaseDate": "2018-03-27"
+     },
+     {
+      "Type": "Modification",
+      "ModificationName": "CWE Content Team",
+      "ModificationOrganization": "MITRE",
+      "ModificationDate": "2020-02-24",
+      "ModificationComment": "updated Relationships, View_Audience",
+      "ModificationVersion": "4.0",
+      "ModificationReleaseDate": "2020-02-24"
+     },
+     {
+      "Type": "Modification",
+      "ModificationName": "CWE Content Team",
+      "ModificationOrganization": "MITRE",
+      "ModificationDate": "2021-03-15",
+      "ModificationComment": "updated Description, Other_Notes",
+      "ModificationVersion": "4.4",
+      "ModificationReleaseDate": "2021-03-15"
+     },
+     {
+      "Type": "Modification",
+      "ModificationName": "CWE Content Team",
+      "ModificationOrganization": "MITRE",
+      "ModificationDate": "2023-06-29",
+      "ModificationComment": "updated Mapping_Notes",
+      "ModificationVersion": "4.12",
+      "ModificationReleaseDate": "2023-06-29"
+     },
+     {
+      "Type": "Rename",
+      "PreviousEntryName": "Natural Hierarchy",
+      "Date": "2008-09-09"
+     }
+    ]
+   }
+  ]
+ },
+ "descendants": {
+  "284": [
+   {
+    "Data": {
+     "Type": "pillar_weakness",
+     "ID": "284",
+     "ViewID": "1000"
+    },
+    "Children": [
+     {
+      "Data": {
+       "Type": "class_weakness",
+       "ID": "287",
+       "ViewID": "1000"
+      },
+      "Children": [
+       {
+        "Data": {
+         "Type": "base_weakness",
+         "ID": "306",
+         "ViewID": "1000"
+        },
+        "Children": null
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "664": [
+   {
+    "Data": {
+     "Type": "pillar_weakness",
+     "ID": "664",
+     "ViewID": "1000"
+    },
+    "Children": [
+     {
+      "Data": {
+       "Type": "class_weakness",
+       "ID": "118",
+       "ViewID": "1000"
+      },
+      "Children": [
+       {
+        "Data": {
+         "Type": "class_weakness",
+         "ID": "119",
+         "ViewID": "1000"
+        },
+        "Children": [
+         {
+          "Data": {
+           "Type": "base_weakness",
+           "ID": "787",
+           "ViewID": "1000"
+          },
+          "Children": [
+           {
+            "Data": {
+             "Type": "variant_weakness",
+             "ID": "121",
+             "ViewID": "1000"
+            },
+            "Children": null
+           }
+          ]
+         },
+         {
+          "Data": {
+           "Type": "base_weakness",
+           "ID": "788",
+           "ViewID": "1000"
+          },
+          "Children": [
+           {
+            "Data": {
+             "Type": "variant_weakness",
+             "ID": "121",
+             "ViewID": "1000"
+            },
+            "Children": null
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "Data": {
+       "Type": "class_weakness",
+       "ID": "400",
+       "ViewID": "1000"
+      },
+      "Children": [
+       {
+        "Data": {
+         "Type": "class_weakness",
+         "ID": "405",
+         "ViewID": "1000"
+        },
+        "Children": [
+         {
+          "Data": {
+           "Type": "class_weakness",
+           "ID": "407",
+           "ViewID": "1000"
+          },
+          "Children": [
+           {
+            "Data": {
+             "Type": "base_weakness",
+             "ID": "1333",
+             "ViewID": "1000"
+            },
+            "Children": null
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "Data": {
+       "Type": "class_weakness",
+       "ID": "913",
+       "ViewID": "1000"
+      },
+      "Children": [
+       {
+        "Data": {
+         "Type": "base_weakness",
+         "ID": "502",
+         "ViewID": "1000"
+        },
+        "Children": null
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "707": [
+   {
+    "Data": {
+     "Type": "pillar_weakness",
+     "ID": "707",
+     "ViewID": "1000"
+    },
+    "Children": [
+     {
+      "Data": {
+       "Type": "class_weakness",
+       "ID": "20",
+       "ViewID": "1000"
+      },
+      "Children": null
+     },
+     {
+      "Data": {
+       "Type": "class_weakness",
+       "ID": "74",
+       "ViewID": "1000"
+      },
+      "Children": [
+       {
+        "Data": {
+         "Type": "class_weakness",
+         "ID": "77",
+         "ViewID": "1000"
+        },
+        "Children": [
+         {
+          "Data": {
+           "Type": "base_weakness",
+           "ID": "917",
+           "ViewID": "1000"
+          },
+          "Children": null
+         }
+        ]
+       },
+       {
+        "Data": {
+         "Type": "base_weakness",
+         "ID": "79",
+         "ViewID": "1000"
+        },
+        "Children": null
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "weaknesses": [
+  {
+   "ID": "20",
+   "Name": "Improper Input Validation",
+   "Abstraction": "Class",
+   "Structure": "Simple",
+   "Status": "Stable",
+   "Description": "The product receives input or data, but it does\n        not validate or incorrectly validates that the input has the\n        properties that are required to process the data safely and\n        correctly.",
+   "ExtendedDescription": "\n\nInput validation is a frequently-used technique for checking potentially dangerous inputs in order to ensure that the inputs are safe for processing within the code, or when communicating with other components.\n\n\nInput can consist of:\n\n\n  - raw data - strings, numbers, parameters, file contents, etc.\n\n  - metadata - information about the raw data, such as headers or size\n\nData can be simple or structured. Structured data can be composed of many nested layers, composed of combinations of metadata and raw data, with other simple or structured data.\n\nMany properties of raw data or metadata may need to be validated upon entry into the code, such as:\n\n\n  - specified quantities such as size, length, frequency, price, rate, number of operations, time, etc.\n\n  - implied or derived quantities, such as the actual size of a file instead of a specified size\n\n  - indexes, offsets, or positions into more complex data structures\n\n  - symbolic keys or other elements into hash tables, associative arrays, etc.\n\n  - well-formedness, i.e. syntactic correctness - compliance with expected syntax \n\n  - lexical token correctness - compliance with rules for what is treated as a token\n\n  - specified or derived type - the actual type of the input (or what the input appears to be)\n\n  - consistency - between individual data elements, between raw data and metadata, between references, etc.\n\n  - conformance to domain-specific rules, e.g. business logic \n\n  - equivalence - ensuring that equivalent inputs are treated the same\n\n  - authenticity, ownership, or other attestations about the input, e.g. a cryptographic signature to prove the source of the data\n\nImplied or derived properties of data must often be calculated or inferred by the code itself. Errors in deriving properties may be considered a contributing factor to improper input validation. ",
+   "LikelihoodOfExploit": "High",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "707",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "PeerOf",
+     "CweID": "345",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "CanPrecede",
+     "CweID": "22",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanPrecede",
+     "CweID": "41",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanPrecede",
+     "CweID": "74",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanPrecede",
+     "CweID": "119",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanPrecede",
+     "CweID": "770",
+     "ViewID": "1000"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Availability"
+     ],
+     "Impact": [
+      "DoS: Crash, Exit, or Restart",
+      "DoS: Resource Consumption (CPU)",
+      "DoS: Resource Consumption (Memory)"
+     ],
+     "Note": "An attacker could provide unexpected values and cause a program crash or arbitrary control of resource allocation, leading to excessive consumption of resources such as memory and CPU."
+    },
+    {
+     "Scope": [
+      "Confidentiality"
+     ],
+     "Impact": [
+      "Read Memory",
+      "Read Files or Directories"
+     ],
+     "Note": "An attacker could read confidential data if they are able to control resource references."
+    },
+    {
+     "Scope": [
+      "Integrity",
+      "Confidentiality",
+      "Availability"
+     ],
+     "Impact": [
+      "Modify Memory",
+      "Execute Unauthorized Code or Commands"
+     ],
+     "Note": "An attacker could use malicious input to modify data or possibly alter control flow in unexpected ways, including arbitrary command execution."
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Language",
+     "Name": "Go",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Name": "AI/ML",
+     "Prevalence": "Often"
+    }
+   ]
+  },
+  {
+   "ID": "74",
+   "Name": "Improper Neutralization of Special Elements in Output Used by a Downstream Component",
+   "Abstraction": "Class",
+   "Structure": "Simple",
+   "Status": "Incomplete",
+   "Description": "The product constructs all or part of a command, data structure, or record using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify how it is parsed or interpreted when it is sent to a downstream component. (Roles: Common-Name, Attack-Focused)",
+   "LikelihoodOfExploit": "High",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "707",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "116",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "20",
+     "ViewID": "1000"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Confidentiality"
+     ],
+     "Impact": [
+      "Read Application Data"
+     ],
+     "Note": "Many injection attacks involve the disclosure of important information -- in terms of both data sensitivity and usefulness in further exploitation."
+    },
+    {
+     "Scope": [
+      "Access Control"
+     ],
+     "Impact": [
+      "Bypass Protection Mechanism"
+     ],
+     "Note": "In some cases, injectable code controls authentication; this may lead to a remote vulnerability."
+    },
+    {
+     "Scope": [
+      "Other"
+     ],
+     "Impact": [
+      "Alter Execution Logic"
+     ],
+     "Note": "Injection attacks are characterized by the ability to significantly change the flow of a given process, and in some cases, to the execution of arbitrary code."
+    },
+    {
+     "Scope": [
+      "Integrity",
+      "Other"
+     ],
+     "Impact": [
+      "Other"
+     ],
+     "Note": "Data injection attacks lead to loss of data integrity in nearly all cases as the control-plane data injected is always incidental to data recall or writing."
+    },
+    {
+     "Scope": [
+      "Non-Repudiation"
+     ],
+     "Impact": [
+      "Hide Activities"
+     ],
+     "Note": "Often the actions performed by injected control code are unlogged."
+    }
+   ],
+   "AlternateTerms": [
+    {
+     "Term": "Injection"
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Undetermined"
+    }
+   ]
+  },
+  {
+   "ID": "77",
+   "Name": "Improper Neutralization of Special Elements used in a Command",
+   "Abstraction": "Class",
+   "Structure": "Simple",
+   "Status": "Draft",
+   "Description": "The product constructs all or part of a command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended command when it is sent to a downstream component. (Roles: Attack-Focused)",
+   "ExtendedDescription": "\n\nMany protocols and products have their own custom command language. While OS or shell command strings are frequently discovered and targeted, developers may not realize that these other command languages might also be vulnerable to attacks.\n",
+   "LikelihoodOfExploit": "High",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "74",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "74",
+     "ViewID": "1003",
+     "Ordinal": "Primary"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Integrity",
+      "Confidentiality",
+      "Availability"
+     ],
+     "Impact": [
+      "Execute Unauthorized Code or Commands"
+     ],
+     "Note": "If a malicious user injects a character (such as a semi-colon) that delimits the end of one command and the beginning of another, it may be possible to then insert an entirely new and unrelated command that was not intended to be executed. This gives an attacker a privilege or capability that they would not otherwise have."
+    }
+   ],
+   "AlternateTerms": [
+    {
+     "Term": "Command injection",
+     "Description": "an attack-oriented phrase for this weakness. Note: often used when \"OS command injection\" (CWE-78) was intended."
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Name": "AI/ML",
+     "Prevalence": "Undetermined"
+    }
+   ]
+  },
+  {
+   "ID": "79",
+   "Name": "Improper Neutralization of Input During Web Page Generation",
+   "Abstraction": "Base",
+   "Structure": "Simple",
+   "Status": "Stable",
+   "Description": "The product does not neutralize or incorrectly neutralizes user-controllable input before it is placed in output that is used as a web page that is served to other users. (Roles: Common-Name, Attack-Focused, Acronym, Attack-Focused, Acronym, Legacy)",
+   "ExtendedDescription": "\n\nThere are many variants of cross-site scripting, characterized by a variety of terms or involving different attack topologies. However, they all indicate the same fundamental weakness: improper neutralization of dangerous input between the adversary and a victim.\n\n\nThe attack methods for XSS can vary depending on the type of XSS and the attacker's goal.\n\n\n\t\t **Reflected XSS exploits (Type 1)**  occur when an attacker causes a victim to supply dangerous content to a vulnerable web application, which is then reflected back to the victim and executed by the web browser. The most common mechanism for delivering malicious content is to include it as a parameter in a URL that is posted publicly or e-mailed directly to the victim. URLs constructed in this manner constitute the core of many phishing schemes, whereby an attacker convinces a victim to visit a URL that refers to a vulnerable site. After the site reflects the attacker's content back to the victim, the content is executed by the victim's browser.\n\n\t\nIn a \n\nStored XSS exploit (Type 2)\n\n, the optimal place to inject malicious content is in an area that is displayed to either many users or particularly interesting users. Interesting users typically have elevated privileges in the application or interact with sensitive data that is valuable to the attacker. If one of these users executes malicious content, the attacker may be able to perform privileged operations on behalf of the user or gain access to sensitive data belonging to the user. For example, the attacker might inject XSS into a log message, which might not be handled properly when an administrator views the logs.\n\n\n\t\nDOM-based XSS (Type 0)\n\n generally involves server-controlled, trusted script that is sent to the client, such as JavaScript that performs sanity checks on a form before the user submits it. If the server-supplied script processes user-supplied data and then injects it back into the web page (such as with dynamic HTML), then DOM-based XSS is possible.\n",
+   "LikelihoodOfExploit": "High",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "74",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "74",
+     "ViewID": "1003",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "CanPrecede",
+     "CweID": "494",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "PeerOf",
+     "CweID": "352",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "113",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "184",
+     "ViewID": "1000"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Access Control",
+      "Confidentiality"
+     ],
+     "Impact": [
+      "Bypass Protection Mechanism",
+      "Read Application Data"
+     ],
+     "Note": "The most common attack performed with cross-site scripting involves the disclosure of private information stored in user cookies, such as session information. Typically, a malicious user will craft a client-side script, which -- when parsed by a web browser -- performs some activity on behalf of the victim to an attacker-controlled system (such as sending all site cookies to a given E-mail address). This could be especially dangerous to the site if the victim has administrator privileges to manage that site. This script will be loaded and run by each user visiting the web site. Since the site requesting to run the script has access to the cookies in question, the malicious script does also."
+    },
+    {
+     "Scope": [
+      "Integrity",
+      "Confidentiality",
+      "Availability"
+     ],
+     "Impact": [
+      "Execute Unauthorized Code or Commands"
+     ],
+     "Note": "In some circumstances it may be possible to run arbitrary code on a victim's computer when cross-site scripting is combined with other flaws, for example, \"drive-by hacking.\""
+    },
+    {
+     "Scope": [
+      "Confidentiality",
+      "Integrity",
+      "Availability",
+      "Access Control"
+     ],
+     "Impact": [
+      "Execute Unauthorized Code or Commands",
+      "Bypass Protection Mechanism",
+      "Read Application Data"
+     ],
+     "Note": "The consequence of an XSS attack is the same regardless of whether it is stored or reflected. The difference is in how the payload arrives at the server. XSS can cause a variety of problems for the end user that range in severity from an annoyance to complete account compromise. Some cross-site scripting vulnerabilities can be exploited to manipulate or steal cookies, create requests that can be mistaken for those of a valid user, compromise confidential information, or execute malicious code on the end user systems for a variety of nefarious purposes. Other damaging attacks include the disclosure of end user files, installation of Trojan horse programs, redirecting the user to some other page or site, running \"Active X\" controls (under Microsoft Internet Explorer) from sites that a user perceives as trustworthy, and modifying presentation of content."
+    }
+   ],
+   "AlternateTerms": [
+    {
+     "Term": "Cross-site Scripting"
+    },
+    {
+     "Term": "XSS",
+     "Description": "A common abbreviation/acronym for Cross-Site Scripting."
+    },
+    {
+     "Term": "HTML Injection",
+     "Description": "A general term for an attack that inserts HTML into a web page, often involving stored XSS, although the term may be used for other XSS variants"
+    },
+    {
+     "Term": "Reflected XSS / Non-Persistent XSS / Type 1 XSS",
+     "Description": "Used when a server application reads data directly from the HTTP request and reflects it back in the HTTP response."
+    },
+    {
+     "Term": "Stored XSS / Persistent XSS / Type 2 XSS",
+     "Description": "Used when a server-side application stores dangerous data in a database, message forum, visitor log, or other trusted data store. At a later time, the dangerous data is subsequently read back into the application and included in dynamic content."
+    },
+    {
+     "Term": "DOM-Based XSS / Type 0 XSS",
+     "Description": "Used when a client-side application performs the injection of XSS into the page by manipulating the Domain Object Model (DOM)."
+    },
+    {
+     "Term": "CSS",
+     "Description": "In the early years after initial discovery of XSS, \"CSS\" was a commonly-used acronym. However, this would cause confusion with \"Cascading Style Sheets,\" so usage of this acronym has declined significantly."
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Language",
+     "Name": "Go",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Name": "AI/ML",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Web Based",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Technology",
+     "Name": "Web Server",
+     "Prevalence": "Undetermined"
+    }
+   ]
+  },
+  {
+   "ID": "118",
+   "Name": "Incorrect Access of Indexable Resource",
+   "Abstraction": "Class",
+   "Structure": "Simple",
+   "Status": "Incomplete",
+   "Description": "The product does not restrict or incorrectly restricts operations within the boundaries of a resource that is accessed using an index or pointer, such as memory or files.",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "664",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Other"
+     ],
+     "Impact": [
+      "Varies by Context"
+     ]
+    }
+   ],
+   "AlternateTerms": [
+    {
+     "Term": "Range Error"
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Not Technology-Specific",
+     "Prevalence": "Undetermined"
+    }
+   ]
+  },
+  {
+   "ID": "119",
+   "Name": "Improper Restriction of Operations within the Bounds of a Memory Buffer",
+   "Abstraction": "Class",
+   "Structure": "Simple",
+   "Status": "Stable",
+   "Description": "The product performs operations on a memory buffer, but it reads from or writes to a memory location outside the buffer's intended boundary.",
+   "LikelihoodOfExploit": "High",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "118",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "20",
+     "ViewID": "700",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "1257",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "1260",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "128",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "129",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "131",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "1339",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "190",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "193",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "195",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "20",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "839",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "843",
+     "ViewID": "1000"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Integrity",
+      "Confidentiality",
+      "Availability"
+     ],
+     "Impact": [
+      "Execute Unauthorized Code or Commands",
+      "Modify Memory"
+     ],
+     "Note": "This may result in read or write operations on unexpected memory locations that could be linked to other variables, data structures, or internal program data. If the memory accessible by the attacker can be effectively controlled, it may be possible to execute arbitrary code, as with a standard buffer overflow. If the attacker can overwrite a pointer's worth of memory (usually 32 or 64 bits), they can alter the intended control flow by redirecting a function pointer to their own malicious code. Even when the attacker can only modify a single byte, arbitrary code execution can be possible. Sometimes this is because the same problem can be exploited repeatedly to the same effect. Other times it is because the attacker can overwrite security-critical application-specific data -- such as a flag indicating whether the user is an administrator."
+    },
+    {
+     "Scope": [
+      "Availability",
+      "Confidentiality"
+     ],
+     "Impact": [
+      "Read Memory",
+      "DoS: Crash, Exit, or Restart",
+      "DoS: Resource Consumption (CPU)",
+      "DoS: Resource Consumption (Memory)"
+     ],
+     "Note": "Out of bounds memory access will very likely result in the corruption of relevant memory, and perhaps instructions, possibly leading to a crash. Other attacks leading to lack of availability are possible, including putting the program into an infinite loop."
+    },
+    {
+     "Scope": [
+      "Confidentiality"
+     ],
+     "Impact": [
+      "Read Memory"
+     ],
+     "Note": "In the case of an out-of-bounds read, the attacker may have access to sensitive information. If the sensitive information contains system details, such as the current buffer's position in memory, this knowledge can be used to craft further attacks, possibly with more severe consequences."
+    }
+   ],
+   "AlternateTerms": [
+    {
+     "Term": "Buffer Overflow",
+     "Description": "This term has many different meanings to different audiences. From a CWE mapping perspective, this term should be avoided where possible. Some researchers, developers, and tools intend for it to mean \"write past the end of a buffer,\" whereas others use the same term to mean \"any read or write outside the boundaries of a buffer, whether before the beginning of the buffer or after the end of the buffer.\" Others could mean \"any action after the end of a buffer, whether it is a read or write.\" Since the term is commonly used for exploitation and for vulnerabilities, it further confuses things."
+    },
+    {
+     "Term": "buffer overrun",
+     "Description": "Some prominent vendors and researchers use the term \"buffer overrun,\" but most people use \"buffer overflow.\" See the alternate term for \"buffer overflow\" for context."
+    },
+    {
+     "Term": "memory safety",
+     "Description": "Generally used for techniques that avoid weaknesses related to memory access, such as those identified by CWE-119 and its descendants. However, the term is not formal, and there is likely disagreement between practitioners as to which weaknesses are implicitly covered by the \"memory safety\" term."
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Memory-Unsafe",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Language",
+     "Name": "C",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Language",
+     "Name": "C++",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Language",
+     "Class": "Assembly",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Not Technology-Specific",
+     "Prevalence": "Undetermined"
+    }
+   ]
+  },
+  {
+   "ID": "121",
+   "Name": "Stack-based Buffer Overflow",
+   "Abstraction": "Variant",
+   "Structure": "Simple",
+   "Status": "Draft",
+   "Description": "The product writes past the end of a buffer that was allocated on the stack.",
+   "LikelihoodOfExploit": "High",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "788",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "787",
+     "ViewID": "1000"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Availability"
+     ],
+     "Impact": [
+      "Modify Memory",
+      "DoS: Crash, Exit, or Restart",
+      "DoS: Resource Consumption (CPU)",
+      "DoS: Resource Consumption (Memory)"
+     ],
+     "Note": "Buffer overflows generally lead to crashes. Other attacks leading to lack of availability are possible, including putting the program into an infinite loop."
+    },
+    {
+     "Scope": [
+      "Integrity",
+      "Confidentiality",
+      "Availability",
+      "Access Control"
+     ],
+     "Impact": [
+      "Modify Memory",
+      "Execute Unauthorized Code or Commands",
+      "Bypass Protection Mechanism"
+     ],
+     "Note": "Buffer overflows often can be used to execute arbitrary code, which is usually outside the scope of a program's implicit security policy."
+    },
+    {
+     "Scope": [
+      "Integrity",
+      "Confidentiality",
+      "Availability",
+      "Access Control",
+      "Other"
+     ],
+     "Impact": [
+      "Modify Memory",
+      "Execute Unauthorized Code or Commands",
+      "Bypass Protection Mechanism",
+      "Other"
+     ],
+     "Note": "When the consequence is arbitrary code execution, this can often be used to subvert any other security service."
+    }
+   ],
+   "AlternateTerms": [
+    {
+     "Term": "Stack Overflow",
+     "Description": "\"Stack Overflow\" is often used to mean the same thing as stack-based buffer overflow, however it is also used on occasion to mean stack exhaustion, usually a result from an excessively recursive function call. Due to the ambiguity of the term, use of stack overflow to describe either circumstance is discouraged."
+    },
+    {
+     "Term": "Stack Buffer Overflow"
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Memory-Unsafe",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Language",
+     "Name": "C",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Language",
+     "Name": "C++",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Not Technology-Specific",
+     "Prevalence": "Undetermined"
+    }
+   ]
+  },
+  {
+   "ID": "284",
+   "Name": "Improper Access Control",
+   "Abstraction": "Pillar",
+   "Structure": "Simple",
+   "Status": "Incomplete",
+   "Description": "The product does not restrict or incorrectly restricts access to a resource from an unauthorized actor.",
+   "ExtendedDescription": "\n\nAccess control involves the use of several protection mechanisms such as:\n\n\n  - Authentication (proving the identity of an actor)\n\n  - Authorization (ensuring that a given actor can access a resource), and\n\n  - Accountability (tracking of activities that were performed)\n\nThere are two distinct behaviors that can introduce access control weaknesses:\n\n  - Specification: incorrect privileges, permissions, ownership, etc. are explicitly specified for either the user or the resource (for example, setting a password file to be world-writable, or giving administrator capabilities to a guest user). This action could be performed by the program or the administrator.\n\n  - Enforcement: the mechanism contains errors that prevent it from properly enforcing the specified access control requirements (e.g., allowing the user to specify their own privileges, or allowing a syntactically-incorrect ACL to produce insecure settings). This problem occurs within the program itself, in that it does not actually enforce the intended security policy that the administrator specifies.\n\n",
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Other"
+     ],
+     "Impact": [
+      "Varies by Context",
+      "Gain Privileges or Assume Identity"
+     ],
+     "Note": "When any mechanism is not applied or otherwise fails, attackers can compromise the security of the product by gaining privileges, reading sensitive information, executing commands, evading detection, etc."
+    }
+   ],
+   "AlternateTerms": [
+    {
+     "Term": "Authorization",
+     "Description": "The terms \"access control\" and \"authorization\" are often used interchangeably, although many people have distinct definitions. The CWE usage of \"access control\" is intended as a general term for the various mechanisms that restrict which users can access which resources, and \"authorization\" is more narrowly defined. It is unlikely that there will be community consensus on the use of these terms."
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Not Technology-Specific",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Technology",
+     "Class": "ICS/OT",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Web Based",
+     "Prevalence": "Often"
+    }
+   ]
+  },
+  {
+   "ID": "287",
+   "Name": "Improper Authentication",
+   "Abstraction": "Class",
+   "Structure": "Simple",
+   "Status": "Draft",
+   "Description": "When an actor claims to have a given identity, the product does not prove or insufficiently proves that the claim is correct.",
+   "LikelihoodOfExploit": "High",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "284",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "284",
+     "ViewID": "1340",
+     "Ordinal": "Primary"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Integrity",
+      "Confidentiality",
+      "Availability",
+      "Access Control"
+     ],
+     "Impact": [
+      "Read Application Data",
+      "Gain Privileges or Assume Identity",
+      "Execute Unauthorized Code or Commands"
+     ],
+     "Note": "This weakness can lead to the exposure of resources or functionality to unintended actors, possibly providing attackers with sensitive information or even execute arbitrary code."
+    }
+   ],
+   "AlternateTerms": [
+    {
+     "Term": "authentification",
+     "Description": "An alternate term is \"authentification\", which appears to be most commonly used by people from non-English-speaking countries."
+    },
+    {
+     "Term": "AuthN",
+     "Description": "\"AuthN\" is typically used as an abbreviation of \"authentication\" within the web application security community. It is also distinct from \"AuthZ,\" which is an abbreviation of \"authorization.\" The use of \"Auth\" as an abbreviation is discouraged, since it could be used for either authentication or authorization."
+    },
+    {
+     "Term": "AuthC",
+     "Description": "\"AuthC\" is used as an abbreviation of \"authentication,\" but it appears to used less frequently than \"AuthN.\""
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Operating_System",
+     "Class": "Not OS-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Not Technology-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Web Based",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "ICS/OT",
+     "Prevalence": "Often"
+    }
+   ]
+  },
+  {
+   "ID": "306",
+   "Name": "Missing Authentication for Critical Functionality",
+   "Abstraction": "Base",
+   "Structure": "Simple",
+   "Status": "Draft",
+   "Description": "The product does not perform any authentication for functionality that requires a provable user identity or consumes a significant amount of resources.",
+   "LikelihoodOfExploit": "High",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "287",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "287",
+     "ViewID": "1003",
+     "Ordinal": "Primary"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Access Control",
+      "Other"
+     ],
+     "Impact": [
+      "Gain Privileges or Assume Identity",
+      "Varies by Context"
+     ],
+     "Note": "Exposing critical functionality essentially provides an attacker with the privilege level of that functionality. The consequences will depend on the associated functionality, but they can range from reading or modifying sensitive data, accessing administrative or other privileged functionality, or possibly even executing arbitrary code."
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Language",
+     "Name": "Go",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Cloud Computing",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "ICS/OT",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Technology",
+     "Name": "AI/ML",
+     "Prevalence": "Often"
+    }
+   ]
+  },
+  {
+   "ID": "400",
+   "Name": "Uncontrolled Resource Consumption",
+   "Abstraction": "Class",
+   "Structure": "Simple",
+   "Status": "Draft",
+   "Description": "The product does not properly control the allocation and maintenance of a limited resource.",
+   "LikelihoodOfExploit": "High",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "664",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "410",
+     "ViewID": "1000"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Availability"
+     ],
+     "Impact": [
+      "DoS: Crash, Exit, or Restart",
+      "DoS: Resource Consumption (CPU)",
+      "DoS: Resource Consumption (Memory)",
+      "DoS: Resource Consumption (Other)"
+     ],
+     "Note": "If an attacker can trigger the allocation of the limited resources, but the number or size of the resources is not controlled, then the most common result is denial of service. This would prevent valid users from accessing the product, and it could potentially have an impact on the surrounding environment, i.e., the product may slow down, crash due to unhandled errors, or lock out legitimate users. For example, a memory exhaustion attack against an application could slow down the application as well as its host operating system."
+    },
+    {
+     "Scope": [
+      "Access Control",
+      "Other"
+     ],
+     "Impact": [
+      "Bypass Protection Mechanism",
+      "Other"
+     ],
+     "Note": "In some cases it may be possible to force the product to \"fail open\" in the event of resource exhaustion. The state of the product -- and possibly the security functionality - may then be compromised."
+    }
+   ],
+   "AlternateTerms": [
+    {
+     "Term": "Resource Exhaustion"
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Language",
+     "Name": "Python",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Not Technology-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Name": "AI/ML",
+     "Prevalence": "Often"
+    }
+   ]
+  },
+  {
+   "ID": "405",
+   "Name": "Asymmetric Resource Consumption (Amplification)",
+   "Abstraction": "Class",
+   "Structure": "Simple",
+   "Status": "Incomplete",
+   "Description": "The product does not properly control situations in which an adversary can cause the product to consume or produce excessive resources without requiring the adversary to invest equivalent work or otherwise prove authorization, i.e., the adversary's influence is \"asymmetric.\"",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "400",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "PeerOf",
+     "CweID": "404",
+     "ViewID": "1000"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Availability"
+     ],
+     "Impact": [
+      "DoS: Amplification",
+      "DoS: Resource Consumption (CPU)",
+      "DoS: Resource Consumption (Memory)",
+      "DoS: Resource Consumption (Other)"
+     ],
+     "Likelihood": [
+      "High"
+     ],
+     "Note": "This can lead to poor performance due to \"amplification\" of resource consumption, typically in a non-linear fashion. This situation is worsened if the product allows malicious users or attackers to consume more resources than their access level permits. Sometimes this is a factor in \"flood\" attacks, but other types of amplification exist."
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Operating_System",
+     "Class": "Not OS-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Architecture",
+     "Class": "Not Architecture-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Not Technology-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Client Server",
+     "Prevalence": "Undetermined"
+    }
+   ]
+  },
+  {
+   "ID": "407",
+   "Name": "Inefficient Algorithmic Complexity",
+   "Abstraction": "Class",
+   "Structure": "Simple",
+   "Status": "Incomplete",
+   "Description": "An algorithm in a product has an inefficient worst-case computational complexity that may be detrimental to system performance and can be triggered by an attacker, typically using crafted manipulations that ensure that the worst case is being reached.",
+   "LikelihoodOfExploit": "Low",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "405",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Availability"
+     ],
+     "Impact": [
+      "DoS: Resource Consumption (CPU)",
+      "DoS: Resource Consumption (Memory)",
+      "DoS: Resource Consumption (Other)"
+     ],
+     "Note": "The typical consequence is CPU consumption, but memory consumption and consumption of other resources can also occur."
+    }
+   ],
+   "AlternateTerms": [
+    {
+     "Term": "Quadratic Complexity",
+     "Description": "Used when the algorithmic complexity is related to the square of the number of inputs (N^2)"
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Undetermined"
+    }
+   ]
+  },
+  {
+   "ID": "502",
+   "Name": "Deserialization of Untrusted Data",
+   "Abstraction": "Base",
+   "Structure": "Simple",
+   "Status": "Draft",
+   "Description": "The product deserializes untrusted data without sufficiently ensuring that the resulting data will be valid.",
+   "LikelihoodOfExploit": "Medium",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "913",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "913",
+     "ViewID": "1003",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "PeerOf",
+     "CweID": "915",
+     "ViewID": "1000"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Integrity"
+     ],
+     "Impact": [
+      "Modify Application Data",
+      "Unexpected State"
+     ],
+     "Note": "Attackers can modify unexpected objects or data that was assumed to be safe from modification. Deserialized data or code could be modified without using the provided accessor functions, or unexpected functions could be invoked."
+    },
+    {
+     "Scope": [
+      "Availability"
+     ],
+     "Impact": [
+      "DoS: Resource Consumption (CPU)"
+     ],
+     "Note": "If a function is making an assumption on when to terminate, based on a sentry in a string, it could easily never terminate."
+    },
+    {
+     "Scope": [
+      "Other"
+     ],
+     "Impact": [
+      "Varies by Context"
+     ],
+     "Note": "The consequences can vary widely, because it depends on which objects or methods are being deserialized, and how they are used. Making an assumption that the code in the deserialized object is valid is dangerous and can enable exploitation. One example is attackers using gadget chains to perform unauthorized actions, such as generating a shell."
+    }
+   ],
+   "AlternateTerms": [
+    {
+     "Term": "Marshaling/Marshalling, Unmarshaling/Unmarshalling",
+     "Description": "Marshaling and unmarshaling are effectively synonyms for serialization and deserialization, respectively."
+    },
+    {
+     "Term": "Pickling, Unpickling",
+     "Description": "In Python, the \"pickle\" functionality is used to perform serialization and deserialization."
+    },
+    {
+     "Term": "PHP Object Injection",
+     "Description": "Some PHP application researchers use this term when attacking unsafe use of the unserialize() function; but it is also used for CWE-915."
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Name": "Java",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Language",
+     "Name": "Ruby",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Language",
+     "Name": "PHP",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Language",
+     "Name": "Python",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Language",
+     "Name": "JavaScript",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Language",
+     "Name": "Python",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Not Technology-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "ICS/OT",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Technology",
+     "Name": "AI/ML",
+     "Prevalence": "Often"
+    }
+   ]
+  },
+  {
+   "ID": "664",
+   "Name": "Improper Control of a Resource Through its Lifetime",
+   "Abstraction": "Pillar",
+   "Structure": "Simple",
+   "Status": "Draft",
+   "Description": "The product does not maintain or incorrectly maintains control over a resource throughout its lifetime of creation, use, and release.",
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Other"
+     ],
+     "Impact": [
+      "Varies by Context"
+     ],
+     "Note": "When code does not follow the instructions for resource management, it can lead to unexpected behaviors and potentially exploitable states."
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Not Technology-Specific",
+     "Prevalence": "Undetermined"
+    }
+   ]
+  },
+  {
+   "ID": "707",
+   "Name": "Improper Neutralization",
+   "Abstraction": "Pillar",
+   "Structure": "Simple",
+   "Status": "Incomplete",
+   "Description": "The product does not ensure or incorrectly ensures that structured messages or data are well-formed and that certain security properties are met before being used when received from an upstream component, or before being sent to a downstream component.",
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Other"
+     ],
+     "Impact": [
+      "Varies by Context",
+      "Unexpected State"
+     ],
+     "Note": "If a message is malformed, it may cause the message to be incorrectly interpreted."
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Operating_System",
+     "Class": "Not OS-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Architecture",
+     "Class": "Not Architecture-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "Not Technology-Specific",
+     "Prevalence": "Undetermined"
+    }
+   ]
+  },
+  {
+   "ID": "787",
+   "Name": "Out-of-bounds Write",
+   "Abstraction": "Base",
+   "Structure": "Simple",
+   "Status": "Draft",
+   "Description": "The product writes data past the end, or before the beginning, of the intended buffer.",
+   "LikelihoodOfExploit": "High",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "119",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "119",
+     "ViewID": "1003",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "119",
+     "ViewID": "1305",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "119",
+     "ViewID": "1340",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "822",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "823",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "824",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "CanFollow",
+     "CweID": "825",
+     "ViewID": "1000"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Integrity"
+     ],
+     "Impact": [
+      "Modify Memory",
+      "Execute Unauthorized Code or Commands"
+     ],
+     "Note": "Write operations could cause memory corruption. In some cases, an adversary can modify control data such as return addresses in order to execute unexpected code."
+    },
+    {
+     "Scope": [
+      "Availability"
+     ],
+     "Impact": [
+      "DoS: Crash, Exit, or Restart"
+     ],
+     "Note": "Attempting to access out-of-range, invalid, or unauthorized memory could cause the product to crash."
+    },
+    {
+     "Scope": [
+      "Other"
+     ],
+     "Impact": [
+      "Unexpected State"
+     ],
+     "Note": "Subsequent write operations can produce undefined or unexpected results."
+    }
+   ],
+   "AlternateTerms": [
+    {
+     "Term": "Memory Corruption",
+     "Description": "Often used to describe the consequences of writing to memory outside the bounds of a buffer, or to memory that is otherwise invalid."
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Memory-Unsafe",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Language",
+     "Name": "C",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Language",
+     "Name": "C++",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Language",
+     "Class": "Assembly",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Technology",
+     "Class": "ICS/OT",
+     "Prevalence": "Often"
+    }
+   ]
+  },
+  {
+   "ID": "788",
+   "Name": "Access of Memory Location After End of Buffer",
+   "Abstraction": "Base",
+   "Structure": "Simple",
+   "Status": "Incomplete",
+   "Description": "The product reads or writes to a buffer using an index or pointer that references a memory location after the end of the buffer.",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "119",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "119",
+     "ViewID": "1305",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "119",
+     "ViewID": "1340",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "Overlaps",
+     "CweID": "126",
+     "ViewID": "1000"
+    },
+    {
+     "Nature": "Overlaps",
+     "CweID": "787",
+     "ViewID": "1000"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Confidentiality"
+     ],
+     "Impact": [
+      "Read Memory"
+     ],
+     "Note": "For an out-of-bounds read, the attacker may have access to sensitive information. If the sensitive information contains system details, such as the current buffer's position in memory, this knowledge can be used to craft further attacks, possibly with more severe consequences."
+    },
+    {
+     "Scope": [
+      "Integrity",
+      "Availability"
+     ],
+     "Impact": [
+      "Modify Memory",
+      "DoS: Crash, Exit, or Restart"
+     ],
+     "Note": "Out of bounds memory access will very likely result in the corruption of relevant memory, and perhaps instructions, possibly leading to a crash. Other attacks leading to lack of availability are possible, including putting the program into an infinite loop."
+    },
+    {
+     "Scope": [
+      "Integrity"
+     ],
+     "Impact": [
+      "Modify Memory",
+      "Execute Unauthorized Code or Commands"
+     ],
+     "Note": "If the memory accessible by the attacker can be effectively controlled, it may be possible to execute arbitrary code, as with a standard buffer overflow. If the attacker can overwrite a pointer's worth of memory (usually 32 or 64 bits), they can redirect a function pointer to their own malicious code. Even when the attacker can only modify a single byte arbitrary code execution can be possible. Sometimes this is because the same problem can be exploited repeatedly to the same effect. Other times it is because the attacker can overwrite security-critical application-specific data -- such as a flag indicating whether the user is an administrator."
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Memory-Unsafe",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Language",
+     "Name": "C",
+     "Prevalence": "Often"
+    },
+    {
+     "Type": "Language",
+     "Name": "C++",
+     "Prevalence": "Often"
+    }
+   ]
+  },
+  {
+   "ID": "913",
+   "Name": "Improper Control of Dynamically-Managed Code Resources",
+   "Abstraction": "Class",
+   "Structure": "Simple",
+   "Status": "Incomplete",
+   "Description": "The product does not properly restrict reading from or writing to dynamically-managed code resources such as variables, objects, classes, attributes, functions, or executable instructions or statements.",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "664",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Integrity"
+     ],
+     "Impact": [
+      "Execute Unauthorized Code or Commands"
+     ]
+    },
+    {
+     "Scope": [
+      "Other",
+      "Integrity"
+     ],
+     "Impact": [
+      "Varies by Context",
+      "Alter Execution Logic"
+     ]
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Language",
+     "Class": "Interpreted",
+     "Prevalence": "Undetermined"
+    }
+   ]
+  },
+  {
+   "ID": "917",
+   "Name": "Improper Neutralization of Special Elements used in an Expression Language Statement",
+   "Abstraction": "Base",
+   "Structure": "Simple",
+   "Status": "Incomplete",
+   "Description": "The product constructs all or part of an expression language (EL) statement in a framework such as a Java Server Page (JSP) using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended EL statement before it is executed. (Roles: Acronym, Common-Name, Attack-Focused)",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "77",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "PeerOf",
+     "CweID": "1336",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "74",
+     "ViewID": "1003",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "77",
+     "ViewID": "1305",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "77",
+     "ViewID": "1340",
+     "Ordinal": "Primary"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Confidentiality"
+     ],
+     "Impact": [
+      "Read Application Data"
+     ],
+     "Note": "An attacker could insert an expression that references private data, which is then included in the output."
+    },
+    {
+     "Scope": [
+      "Integrity"
+     ],
+     "Impact": [
+      "Execute Unauthorized Code or Commands"
+     ],
+     "Note": "An attacker could execute arbitrary expressions."
+    }
+   ],
+   "AlternateTerms": [
+    {
+     "Term": "EL Injection"
+    },
+    {
+     "Term": "Expression Language Injection"
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Name": "Java",
+     "Prevalence": "Undetermined"
+    }
+   ]
+  },
+  {
+   "ID": "1333",
+   "Name": "Inefficient Regular Expression Complexity",
+   "Abstraction": "Base",
+   "Structure": "Simple",
+   "Status": "Draft",
+   "Description": "The product uses a regular expression with a worst-case computational complexity that is inefficient and possibly exponential.",
+   "LikelihoodOfExploit": "High",
+   "RelatedWeaknesses": [
+    {
+     "Nature": "ChildOf",
+     "CweID": "407",
+     "ViewID": "1000",
+     "Ordinal": "Primary"
+    },
+    {
+     "Nature": "ChildOf",
+     "CweID": "407",
+     "ViewID": "1003",
+     "Ordinal": "Primary"
+    }
+   ],
+   "CommonConsequences": [
+    {
+     "Scope": [
+      "Availability"
+     ],
+     "Impact": [
+      "DoS: Resource Consumption (CPU)"
+     ],
+     "Likelihood": [
+      "High"
+     ],
+     "Note": "Attackers can create crafted inputs that intentionally cause the regular expression to use excessive backtracking in a way that causes the CPU consumption to spike."
+    }
+   ],
+   "AlternateTerms": [
+    {
+     "Term": "ReDoS",
+     "Description": "ReDoS is an abbreviation of \"Regular expression Denial of Service\"."
+    },
+    {
+     "Term": "Regular Expression Denial of Service",
+     "Description": "While this term is attack-focused, this is commonly used to describe the weakness."
+    },
+    {
+     "Term": "Catastrophic backtracking",
+     "Description": "This term is used to describe the behavior of the regular expression as a negative technical impact."
+    }
+   ],
+   "ApplicablePlatforms": [
+    {
+     "Type": "Language",
+     "Class": "Not Language-Specific",
+     "Prevalence": "Undetermined"
+    },
+    {
+     "Type": "Language",
+     "Name": "Go",
+     "Prevalence": "Undetermined"
+    }
+   ]
+  }
+ ]
+}

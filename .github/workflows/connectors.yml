@@ -1,0 +1,136 @@
+name: Connectors
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FEED_URL: https://repoql.github.io/RepoQL.Connectors
+
+jobs:
+  test:
+    name: Test every connector
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install rql
+        run: |
+          curl -fsSL https://downloads.repoql.ai/latest/install-rql.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # A suite is written by its generator, so a suite that differs from what the generator writes was edited by
+      # hand, or the generator was changed without running it.
+      - name: Every suite is what its generator writes
+        run: |
+          for generator in connectors/*/suite.gen.mjs; do
+            (cd "$(dirname "$generator")" && node suite.gen.mjs)
+          done
+          git diff --exit-code -- connectors || { echo "::error::A suite differs from what its generator writes. Run node suite.gen.mjs in the connector's folder and commit the result."; exit 1; }
+
+      - name: Run every suite
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          status=0
+          for folder in connectors/*/; do
+            name=$(basename "$folder")
+            staged="$RUNNER_TEMP/staged/$name"
+            node scripts/stage.mjs "$folder" "$staged" > /dev/null
+            for suite in "$staged"/suite*.json; do
+              echo "::group::$name: $(basename "$suite")"
+              if ! rql connector test "$staged/connector.ts" --fixtures "$suite"; then
+                echo "::error::$name: $(basename "$suite") failed."
+                status=1
+              fi
+              echo "::endgroup::"
+            done
+          done
+          exit $status
+
+  publish:
+    name: Publish new versions to the feed
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: feed
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install rql
+        run: |
+          curl -fsSL https://downloads.repoql.ai/latest/install-rql.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # The feed is the gh-pages branch, which GitHub Pages serves. Every version ever published stays in it.
+      - name: Check out the feed
+        run: |
+          if git ls-remote --exit-code --heads origin gh-pages > /dev/null; then
+            git worktree add site origin/gh-pages
+            git -C site switch -c gh-pages
+          else
+            git worktree add --detach site
+            git -C site switch --orphan gh-pages
+            touch site/.nojekyll
+          fi
+
+      - name: Pack and publish each new version
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          status=0
+          for folder in connectors/*/; do
+            name=$(basename "$folder")
+            staged="$RUNNER_TEMP/staged/$name"
+            identity=$(node scripts/stage.mjs "$folder" "$staged")
+            id=$(node -e "console.log(JSON.parse(process.argv[1]).id)" "$identity")
+            version=$(node -e "console.log(JSON.parse(process.argv[1]).version)" "$identity")
+            authors=$(node -e "console.log(JSON.parse(process.argv[1]).authors)" "$identity")
+            index="site/flatcontainer/$(echo "$id" | tr '[:upper:]' '[:lower:]')/index.json"
+            if [ -f "$index" ] && node -e "process.exit(JSON.parse(require('fs').readFileSync(process.argv[1])).versions.includes(process.argv[2].toLowerCase()) ? 0 : 1)" "$index" "$version"; then
+              # A published version never changes: a connector that changed must raise its version.
+              if [ -n "$BEFORE" ] && ! echo "$BEFORE" | grep -qE '^0+$' && ! git diff --quiet "$BEFORE" HEAD -- "$folder"; then
+                echo "::error::$name changed, but $id $version is already published. Raise package.version in $folder/manifest.yaml."
+                status=1
+              else
+                echo "$id $version is already published."
+              fi
+              continue
+            fi
+            mkdir -p out
+            rql connector pack "$staged/connector.ts" --id "$id" --version "$version" --authors "$authors" \
+              --repository "https://github.com/${{ github.repository }}" --commit "${{ github.sha }}" --out out
+            rql connector publish "out/$id.$version.nupkg" --feed site --url "$FEED_URL"
+          done
+          exit $status
+
+      - name: Push the feed
+        run: |
+          cd site
+          git add -A
+          if git diff --cached --quiet; then
+            echo "The feed is unchanged."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "Publish from ${{ github.sha }}"
+          git push origin gh-pages

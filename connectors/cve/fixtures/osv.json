@@ -1,0 +1,95 @@
+{
+ "captured": "2026-11-05, from https://api.osv.dev/v1/querybatch",
+ "answer": {
+  "results": [
+   {
+    "vulns": [
+     {
+      "id": "GHSA-5crp-9r3c-p9vr",
+      "modified": "2026-07-08T06:53:11.583483Z"
+     }
+    ]
+   },
+   {
+    "vulns": [
+     {
+      "id": "GHSA-3pxv-7cmr-fjr4",
+      "modified": "2026-09-10T03:50:42.492278Z"
+     },
+     {
+      "id": "GHSA-6hg6-v5c8-fphq",
+      "modified": "2026-09-10T03:50:43.570169Z"
+     },
+     {
+      "id": "GHSA-7rjr-3q55-vv33",
+      "modified": "2026-10-02T20:30:05.438504Z"
+     },
+     {
+      "id": "GHSA-8489-44mv-ggj8",
+      "modified": "2026-06-09T10:45:14.253296Z"
+     },
+     {
+      "id": "GHSA-h383-gmxw-35v2",
+      "modified": "2026-10-26T15:30:05.719203Z"
+     },
+     {
+      "id": "GHSA-jfh8-c2jp-5v3q",
+      "modified": "2025-10-22T19:37:02.616807Z"
+     },
+     {
+      "id": "GHSA-p6xc-xr62-6r2g",
+      "modified": "2026-06-09T10:30:14.432177Z"
+     },
+     {
+      "id": "GHSA-vc5p-v9hr-52mj",
+      "modified": "2026-09-10T03:50:32.126499Z"
+     }
+    ]
+   },
+   {}
+  ]
+ },
+ "paged": {
+  "note": "The first two pages OSV answered on 2026-11-05 for Debian:12 linux 6.1.1-1, each cut to its first three advisories. The first keeps its real token; the second is closed here, where OSV gave a token to nine more pages.",
+  "query": {
+   "package": {
+    "ecosystem": "Debian:12",
+    "name": "linux"
+   },
+   "version": "6.1.1-1"
+  },
+  "first": {
+   "vulns": [
+    {
+     "id": "DEBIAN-CVE-2004-0230",
+     "modified": "2026-10-10T00:00:03.244825Z"
+    },
+    {
+     "id": "DEBIAN-CVE-2005-3660",
+     "modified": "2026-10-23T03:47:29.742362Z"
+    },
+    {
+     "id": "DEBIAN-CVE-2007-3719",
+     "modified": "2026-10-21T17:47:31.699225Z"
+    }
+   ],
+   "next_page_token": "P:CrIBCiIKB3Z1bG5faWQSFxoVREVCSUFOLUNWRS0yMDIzLTUyNzczCi0KCmNvYXJzZV9taW4SHxodMDA6MDAwMDAwMDAuMDAwMDAwMDAuMDAwMDAwMDAKLQoKY29hcnNlX21heBIfGh0wMDowMDAwMDAwNi4wMDAwMDAwMS4wMDAwMDA2NBIqagltfm9zcy12ZGJyHQsSEEFmZmVjdGVkVmVyc2lvbnMYgICAjP3ajwsMGAAgAA:REVCSUFOLUNWRS0yMDIzLTUyNzcz"
+  },
+  "second": {
+   "vulns": [
+    {
+     "id": "DEBIAN-CVE-2023-52774",
+     "modified": "2026-10-26T18:02:50.833435Z"
+    },
+    {
+     "id": "DEBIAN-CVE-2023-52775",
+     "modified": "2026-10-26T18:02:59.132052Z"
+    },
+    {
+     "id": "DEBIAN-CVE-2023-52777",
+     "modified": "2026-10-26T18:02:50.947867Z"
+    }
+   ]
+  }
+ }
+}

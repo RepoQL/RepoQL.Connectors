@@ -1,0 +1,6 @@
+*.nupkg
+/out/
+/staged/
+/site/
+.DS_Store
+/.repoql/

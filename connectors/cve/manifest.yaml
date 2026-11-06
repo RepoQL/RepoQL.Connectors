@@ -1,0 +1,42 @@
+# The package this connector is published as. Change the id when you publish your own copy, and raise the version on
+# every change: a published version never changes.
+package:
+  id: RepoQL.Connectors.Cve
+  version: 1.0.0
+  authors: RepoQL
+scheme: cve
+title: Publicly reported vulnerabilities (CVEs)
+summary: Copies recent and known-exploited CVEs from NVD, with EPSS exploit likelihood and MITRE's CWE weaknesses they name, has a model read what type of software each concerns, and files them by month, severity and type. It only reads.
+calls: [parse, fetch, analyze, render, invoke]
+# Version 1 keeps each CVE as NVD answers it, cut to what render shows: see Cve in connector.ts.
+recordsVersion: 1
+# cve://recent holds the CVEs published in the window and every known exploited one; cve://kev only the known exploited.
+uri:
+  example: cve://recent
+# NVD asks that an incremental client poll no more often than every two hours. A full pass reads the whole window
+# again once a week, which is when a CVE that ages out of the window, or that NVD stops listing, is removed.
+fetchIntervalSeconds: 7200
+fullFetchIntervalSeconds: 604800
+# A CVE's description may run to thousands of characters, and a few CVEs list hundreds of products and references.
+# The connector cuts each record to fit 64 KiB.
+maxValueBytes: 65536
+# A model reads each CVE once: the type of software it concerns, and two facts about the attack.
+inference: true
+network:
+  hosts:
+    - url: https://services.nvd.nist.gov/rest/json/cves/2.0
+      note: NVD's CVE API, read without a key. Every request is a GET that lists, 200 to a page, the CVEs published or last modified in a window of at most 120 days, or the CVEs CISA lists as known exploited.
+    - url: https://api.first.org/data/v1/epss
+      note: FIRST's EPSS API. Every request is a GET of 10,000 scores, once a day, when EPSS publishes the day's scores.
+    - url: https://cwe-api.mitre.org/api/v1/cwe/**
+      note: MITRE's CWE API. On a full pass, about 22 GETs read every weakness and category of the CWE list, so CVEs link to the weaknesses they name.
+    - url: https://api.osv.dev/v1/querybatch
+      note: OSV's batch query, called only by the function cve_affects, with the package names and versions a query passes it. A query is a POST.
+  # NVD allows 5 requests in a rolling 30 seconds without a key. This stays under it.
+  requestsPerMinute: 9
+functions:
+  affects:
+    description: The OSV advisories that name one package at one version, as a JSON list of their ids, such as ["GHSA-5crp-9r3c-p9vr"], or [] for none. The ecosystem is OSV's name for it, such as NuGet, Go, Maven or npm. A list is whole or the call fails; a distribution's kernel can name more than one call reads.
+    parameters: [{ name: ecosystem, type: text }, { name: package, type: text }, { name: version, type: text }]
+    returns: json
+    batch: 1000
