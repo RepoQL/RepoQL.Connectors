@@ -2,7 +2,7 @@
 # every change: a published version never changes.
 package:
   id: RepoQL.Connectors.Cve
-  version: 1.0.0
+  version: 1.0.1
   authors: RepoQL
 scheme: cve
 title: Publicly reported vulnerabilities (CVEs)
