@@ -7331,6 +7331,52 @@
        }
       ]
      },
+     "cve_in_range('litellm', '1.9.0')": {
+      "rows": 1,
+      "contains": [
+       {
+        "id": "CVE-2026-59822",
+        "range": "< 1.84.0",
+        "in_range": "yes"
+       }
+      ]
+     },
+     "cve_in_range('LiteLLM', 'v1.84')": {
+      "rows": 1,
+      "contains": [
+       {
+        "id": "CVE-2026-59822",
+        "in_range": "no"
+       }
+      ]
+     },
+     "cve_in_range('sharepoint', '16')": {
+      "rows": 3,
+      "contains": [
+       {
+        "product": "Microsoft SharePoint Server 2019",
+        "in_range": "yes"
+       }
+      ]
+     },
+     "cve_in_range('log4j', '2.14.1')": {
+      "rows": 1,
+      "contains": [
+       {
+        "id": "CVE-2021-44228",
+        "in_range": "cannot tell"
+       }
+      ]
+     },
+     "cve_in_range('DIR-505', '1.10B02')": {
+      "rows": 1,
+      "contains": [
+       {
+        "id": "CVE-2026-120189",
+        "in_range": "cannot tell"
+       }
+      ]
+     },
      "cve_known_exploited": {
       "rows": 3,
       "contains": [
@@ -8715,6 +8761,30 @@
         "range": ">= 16.0.1, no upper bound stated",
         "version_from": "16.0.1",
         "first_unaffected": null
+       }
+      ]
+     },
+     "cve_in_range('Windows Server 2019', '10.0.17763.9000')": {
+      "rows": 2,
+      "contains": [
+       {
+        "id": "CVE-2026-70096",
+        "product": "Windows Server 2019",
+        "in_range": "yes"
+       },
+       {
+        "product": "Windows Server 2019 (Server Core installation)",
+        "in_range": "yes"
+       }
+      ]
+     },
+     "cve_in_range('Windows Server 2019', '10.0.17763.9376')": {
+      "rows": 2,
+      "contains": [
+       {
+        "id": "CVE-2026-70096",
+        "product": "Windows Server 2019",
+        "in_range": "no"
        }
       ]
      }

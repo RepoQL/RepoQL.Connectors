@@ -246,6 +246,14 @@ const suite = {
             { id: 'CVE-2026-120189', product: 'DIR-505', range: '1.10B02', version_exact: '1.10B02' },
             { id: 'CVE-2021-44228', product: 'Apache Log4j2', range: '>= 2.0-beta9, no upper bound stated, unaffected from 2.3.1, 2.12.2, 2.15.0', first_unaffected: '2.3.1' },
           ] },
+          // 1.9.0 is below 1.84.0 as versions, and above it as text.
+          "cve_in_range('litellm', '1.9.0')": { rows: 1, contains: [{ id: 'CVE-2026-59822', range: '< 1.84.0', in_range: 'yes' }] },
+          "cve_in_range('LiteLLM', 'v1.84')": { rows: 1, contains: [{ id: 'CVE-2026-59822', in_range: 'no' }] },
+          // 16 is 16.0.0: trailing zeros are no version of their own. Each of SharePoint's three products has a row.
+          "cve_in_range('sharepoint', '16')": { rows: 3, contains: [{ product: 'Microsoft SharePoint Server 2019', in_range: 'yes' }] },
+          // A bound with a suffix, a version asked that is a build name, and a range that ends nowhere: none is guessed.
+          "cve_in_range('log4j', '2.14.1')": { rows: 1, contains: [{ id: 'CVE-2021-44228', in_range: 'cannot tell' }] },
+          "cve_in_range('DIR-505', '1.10B02')": { rows: 1, contains: [{ id: 'CVE-2026-120189', in_range: 'cannot tell' }] },
           cve_known_exploited: { rows: 3, contains: [{ id: 'CVE-2026-59822' }, { id: 'CVE-2026-56164' }, { id: 'CVE-2021-44228' }] },
           cve_packages: { rows: 1, contains: [{ purl: 'pkg:cpan/XS-libbrotli' }] },
           cve_weaknesses: { rows: CWE_ENTRIES, contains: [{ id: 'CWE-400', abstraction: 'class', cves: 1 }, { id: 'CWE-306', cves: 2 }, { id: 'CWE-1333', abstraction: 'base', cves: 0 }] },
@@ -314,6 +322,9 @@ const suite = {
           cve_vulnerabilities: { contains: [{ id: 'CVE-2026-70096', product: 'Microsoft 365 Apps for Enterprise', products_total: 27 }] },
           cve_products: { contains: [{ id: 'CVE-2026-70096', vendor: 'Microsoft', product: 'Windows Server 2019', version_from: '10.0.17763.0', version_below: '10.0.17763.9376', first_unaffected: '10.0.17763.9376', severity: 'critical' },
             { id: 'CVE-2026-70096', product: 'Microsoft 365 Apps for Enterprise', range: '>= 16.0.1, no upper bound stated', version_from: '16.0.1', first_unaffected: null }] },
+          // The build before the fix is in the range, and the fixed build is not. Windows Server 2019 has two products here.
+          "cve_in_range('Windows Server 2019', '10.0.17763.9000')": { rows: 2, contains: [{ id: 'CVE-2026-70096', product: 'Windows Server 2019', in_range: 'yes' }, { product: 'Windows Server 2019 (Server Core installation)', in_range: 'yes' }] },
+          "cve_in_range('Windows Server 2019', '10.0.17763.9376')": { rows: 2, contains: [{ id: 'CVE-2026-70096', product: 'Windows Server 2019', in_range: 'no' }] },
         },
       },
     },

@@ -346,9 +346,9 @@ const CONCEPTS: Concept[] = [
   {
     name: 'CveRangeIsTheRecordsWords', category: 'rule', relevance: ['cves/**'],
     invariant: 'A range of cve_products is the bounds a CVE\'s record states, as text: a version in no range is not thereby unaffected, and first_unaffected is where the record says a range ends, not a fix anyone confirmed.',
-    tags: ['cve', 'version', 'range', 'affected', 'unaffected', 'fixed', 'fix version', 'upgrade', 'first_unaffected', 'version_below', 'end of life', 'semver'],
+    tags: ['cve', 'version', 'range', 'affected', 'unaffected', 'fixed', 'fix version', 'upgrade', 'first_unaffected', 'version_below', 'end of life', 'semver', 'cve_in_range', 'in range', 'compare versions', 'cannot tell'],
     why: 'An authority writes only the versions it checked. A release line that is past its end of life is usually not listed, though the flaw is in it. Some authorities, Node.js among them, list only the last affected release of each line as one exact version, though every earlier release of the line is affected.',
-    depth: ['version_from and version_through are affected themselves; version_after and version_below are not.', 'The bounds are text: SQL compares them as strings, which orders 2.10 before 2.9. Compare versions yourself.', 'A null first_unaffected means the record states no end, not that no fix exists.'],
+    depth: ['version_from and version_through are affected themselves; version_after and version_below are not.', 'The bounds are text, and as text 2.10 sorts before 2.9: cve_version_key compares two written as numbers joined by dots, and cve_in_range(product, version) answers yes, no or cannot tell for each range.', 'cannot tell is not no: the version or a bound has a suffix, is a git commit, or is prose. Check that CVE by hand.', 'A null first_unaffected means the record states no end, not that no fix exists.'],
   },
 ];
 
