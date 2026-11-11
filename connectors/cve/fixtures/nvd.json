@@ -1,5 +1,5 @@
 {
- "captured": "2026-11-05, and CVE-2012-1823 and CVE-2026-111094 on 2026-11-06, from https://services.nvd.nist.gov/rest/json/cves/2.0",
+ "captured": "2026-11-05, and CVE-2012-1823 and CVE-2026-111094 on 2026-11-06, and CVE-2026-70096 and CVE-2026-120194 on 2026-11-11, from https://services.nvd.nist.gov/rest/json/cves/2.0",
  "page": {
   "resultsPerPage": 50,
   "startIndex": 0,
@@ -156,7 +156,7 @@
        "cvssData": {
         "version": "3.1",
         "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
-        "baseScore": 10.0,
+        "baseScore": 10,
         "baseSeverity": "CRITICAL",
         "attackVector": "NETWORK",
         "attackComplexity": "LOW",
@@ -168,7 +168,7 @@
         "availabilityImpact": "HIGH"
        },
        "exploitabilityScore": 3.9,
-       "impactScore": 6.0
+       "impactScore": 6
       }
      ],
      "cvssMetricV2": [
@@ -178,7 +178,7 @@
        "cvssData": {
         "version": "2.0",
         "vectorString": "AV:N/AC:L/Au:N/C:C/I:C/A:C",
-        "baseScore": 10.0,
+        "baseScore": 10,
         "accessVector": "NETWORK",
         "accessComplexity": "LOW",
         "authentication": "NONE",
@@ -187,8 +187,8 @@
         "availabilityImpact": "COMPLETE"
        },
        "baseSeverity": "HIGH",
-       "exploitabilityScore": 10.0,
-       "impactScore": 10.0,
+       "exploitabilityScore": 10,
+       "impactScore": 10,
        "acInsufInfo": false,
        "obtainAllPrivilege": false,
        "obtainUserPrivilege": false,
@@ -356,7 +356,7 @@
      },
      {
       "lang": "es",
-      "value": "LiteLLM es un servidor proxy (AI Gateway) para llamar a las API de LLM en formato OpenAI (o nativo). Antes de la versi\u00f3n 1.84.0, el endpoint HTTP MCP Streamable de LiteLLM permit\u00eda a un atacante no autenticado utilizar un encabezado de autorizaci\u00f3n falsificado para activar una ruta de respaldo de paso de OAuth2 que reemplazaba la validaci\u00f3n fallida de la clave de LiteLLM con un objeto UserAPIKeyAuth() vac\u00edo, permitiendo que las solicitudes llegaran a las herramientas de MCP sin una clave de LiteLLM v\u00e1lida. Este problema est\u00e1 solucionado en la versi\u00f3n 1.84.0."
+      "value": "LiteLLM es un servidor proxy (AI Gateway) para llamar a las API de LLM en formato OpenAI (o nativo). Antes de la versión 1.84.0, el endpoint HTTP MCP Streamable de LiteLLM permitía a un atacante no autenticado utilizar un encabezado de autorización falsificado para activar una ruta de respaldo de paso de OAuth2 que reemplazaba la validación fallida de la clave de LiteLLM con un objeto UserAPIKeyAuth() vacío, permitiendo que las solicitudes llegaran a las herramientas de MCP sin una clave de LiteLLM válida. Este problema está solucionado en la versión 1.84.0."
      }
     ],
     "affected": [
@@ -468,7 +468,7 @@
     },
     "cisaExploitAdd": "2026-09-02",
     "cisaActionDue": "2026-09-16",
-    "cisaRequiredAction": "Apply mitigations in accordance with vendor instructions, ensuring compliance with CISA\u2019s BOD 26-04 Prioritizing Security Updates Based on Risk (see URL in Notes) guidance and CISA\u2019s \u201cForensics Triage Requirements\u201d (see URL in Notes). Follow applicable BOD 26-04 guidance for cloud services or discontinue use of the product if mitigations are unavailable. Stakeholders are responsible for evaluating each asset's internet exposure and ensuring adherence to BOD 26-04 patching guidelines.",
+    "cisaRequiredAction": "Apply mitigations in accordance with vendor instructions, ensuring compliance with CISA’s BOD 26-04 Prioritizing Security Updates Based on Risk (see URL in Notes) guidance and CISA’s “Forensics Triage Requirements” (see URL in Notes). Follow applicable BOD 26-04 guidance for cloud services or discontinue use of the product if mitigations are unavailable. Stakeholders are responsible for evaluating each asset's internet exposure and ensuring adherence to BOD 26-04 patching guidelines.",
     "cisaVulnerabilityName": "BerriAI LiteLLM Improper Authentication Vulnerability",
     "weaknesses": [
      {
@@ -688,7 +688,7 @@
     },
     "cisaExploitAdd": "2026-07-14",
     "cisaActionDue": "2026-07-17",
-    "cisaRequiredAction": "Apply mitigations in accordance with vendor instructions, ensuring compliance with CISA\u2019s BOD 26-04 Prioritizing Security Updates Based on Risk (see URL in Notes) guidance and CISA\u2019s \u201cForensics Triage Requirements\u201d (see URL in Notes). Follow applicable BOD 26-04 guidance for cloud services or discontinue use of the product if mitigations are unavailable. Stakeholders are responsible for evaluating each asset's internet exposure and ensuring adherence to BOD 26-04 patching guidelines.",
+    "cisaRequiredAction": "Apply mitigations in accordance with vendor instructions, ensuring compliance with CISA’s BOD 26-04 Prioritizing Security Updates Based on Risk (see URL in Notes) guidance and CISA’s “Forensics Triage Requirements” (see URL in Notes). Follow applicable BOD 26-04 guidance for cloud services or discontinue use of the product if mitigations are unavailable. Stakeholders are responsible for evaluating each asset's internet exposure and ensuring adherence to BOD 26-04 patching guidelines.",
     "cisaVulnerabilityName": "Microsoft SharePoint Server Missing Authentication for Critical Function Vulnerability",
     "weaknesses": [
      {
@@ -877,7 +877,7 @@
        "cvssData": {
         "version": "2.0",
         "vectorString": "AV:N/AC:L/Au:S/C:N/I:N/A:P",
-        "baseScore": 4.0,
+        "baseScore": 4,
         "accessVector": "NETWORK",
         "accessComplexity": "LOW",
         "authentication": "SINGLE",
@@ -886,7 +886,7 @@
         "availabilityImpact": "PARTIAL"
        },
        "baseSeverity": "MEDIUM",
-       "exploitabilityScore": 8.0,
+       "exploitabilityScore": 8,
        "impactScore": 2.9,
        "acInsufInfo": false,
        "obtainAllPrivilege": false,
@@ -947,7 +947,7 @@
      },
      {
       "lang": "es",
-      "value": "Las caracter\u00edsticas JNDI de Apache Log4j2 2.0-beta9 hasta 2.15.0 (excluyendo las versiones de seguridad 2.12.2, 2.12.3 y 2.3.1) utilizadas en la configuraci\u00f3n, los mensajes de registro y los par\u00e1metros no protegen contra LDAP controlado por un atacante y otros puntos finales relacionados con JNDI. Un atacante que pueda controlar los mensajes de registro o los par\u00e1metros de los mensajes de registro puede ejecutar c\u00f3digo arbitrario cargado desde servidores LDAP cuando la sustituci\u00f3n de la b\u00fasqueda de mensajes est\u00e1 habilitada. A partir de la versi\u00f3n 2.15.0 de log4j, este comportamiento ha sido deshabilitado por defecto. A partir de la versi\u00f3n 2.16.0 (junto con las versiones 2.12.2, 2.12.3 y 2.3.1), esta funcionalidad se ha eliminado por completo. Tenga en cuenta que esta vulnerabilidad es espec\u00edfica de log4j-core y no afecta a log4net, log4cxx u otros proyectos de Apache Logging Services"
+      "value": "Las características JNDI de Apache Log4j2 2.0-beta9 hasta 2.15.0 (excluyendo las versiones de seguridad 2.12.2, 2.12.3 y 2.3.1) utilizadas en la configuración, los mensajes de registro y los parámetros no protegen contra LDAP controlado por un atacante y otros puntos finales relacionados con JNDI. Un atacante que pueda controlar los mensajes de registro o los parámetros de los mensajes de registro puede ejecutar código arbitrario cargado desde servidores LDAP cuando la sustitución de la búsqueda de mensajes está habilitada. A partir de la versión 2.15.0 de log4j, este comportamiento ha sido deshabilitado por defecto. A partir de la versión 2.16.0 (junto con las versiones 2.12.2, 2.12.3 y 2.3.1), esta funcionalidad se ha eliminado por completo. Tenga en cuenta que esta vulnerabilidad es específica de log4j-core y no afecta a log4net, log4cxx u otros proyectos de Apache Logging Services"
      }
     ],
     "affected": [
@@ -999,7 +999,7 @@
        "cvssData": {
         "version": "3.1",
         "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
-        "baseScore": 10.0,
+        "baseScore": 10,
         "baseSeverity": "CRITICAL",
         "attackVector": "NETWORK",
         "attackComplexity": "LOW",
@@ -1011,7 +1011,7 @@
         "availabilityImpact": "HIGH"
        },
        "exploitabilityScore": 3.9,
-       "impactScore": 6.0
+       "impactScore": 6
       },
       {
        "source": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
@@ -1019,7 +1019,7 @@
        "cvssData": {
         "version": "3.1",
         "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
-        "baseScore": 10.0,
+        "baseScore": 10,
         "baseSeverity": "CRITICAL",
         "attackVector": "NETWORK",
         "attackComplexity": "LOW",
@@ -1031,7 +1031,7 @@
         "availabilityImpact": "HIGH"
        },
        "exploitabilityScore": 3.9,
-       "impactScore": 6.0
+       "impactScore": 6
       }
      ],
      "cvssMetricV2": [
@@ -1051,7 +1051,7 @@
        },
        "baseSeverity": "HIGH",
        "exploitabilityScore": 8.6,
-       "impactScore": 10.0,
+       "impactScore": 10,
        "acInsufInfo": false,
        "obtainAllPrivilege": false,
        "obtainUserPrivilege": false,
@@ -5255,6 +5255,987 @@
       "tags": [
        "Vendor Advisory"
       ]
+     }
+    ]
+   }
+  },
+  "CVE-2026-70096": {
+   "cve": {
+    "id": "CVE-2026-70096",
+    "sourceIdentifier": "secure@microsoft.com",
+    "published": "2026-10-13T19:19:21.420",
+    "lastModified": "2026-10-16T16:20:31.387",
+    "vulnStatus": "Undergoing Analysis",
+    "cveTags": [],
+    "descriptions": [
+     {
+      "lang": "en",
+      "value": "Heap-based buffer overflow in Windows Rich Text Edit Control allows an unauthorized attacker to execute code over a network."
+     }
+    ],
+    "affected": [
+     {
+      "source": "secure@microsoft.com",
+      "affectedData": [
+       {
+        "vendor": "Microsoft",
+        "product": "Microsoft 365 Apps for Enterprise",
+        "platforms": [
+         "32-bit Systems",
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "16.0.1",
+          "lessThan": "https://aka.ms/OfficeSecurityReleases",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Microsoft Office 365 for Mac",
+        "versions": [
+         {
+          "version": "1.0.0",
+          "lessThan": "16.114.26101123",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Microsoft Office LTSC 2021",
+        "platforms": [
+         "32-bit Systems",
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "16.0.1",
+          "lessThan": "16.0.14334.20974",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Microsoft Office LTSC 2024",
+        "platforms": [
+         "32-bit Systems",
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "16.0.0",
+          "lessThan": "16.0.17932.21056",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Microsoft Office LTSC for Mac 2021",
+        "versions": [
+         {
+          "version": "16.0.1",
+          "lessThan": "16.114.26101123",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Microsoft Office LTSC for Mac 2024",
+        "versions": [
+         {
+          "version": "16.0.0",
+          "lessThan": "16.114.26101123",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows 10 Version 1607",
+        "platforms": [
+         "32-bit Systems",
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.14393.0",
+          "lessThan": "10.0.14393.9612",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows 10 Version 1809",
+        "platforms": [
+         "32-bit Systems",
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.17763.0",
+          "lessThan": "10.0.17763.9376",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows 10 Version 21H2",
+        "platforms": [
+         "32-bit Systems",
+         "ARM64-based Systems",
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.19044.0",
+          "lessThan": "10.0.19044.7807",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows 10 Version 22H2",
+        "platforms": [
+         "32-bit Systems",
+         "ARM64-based Systems",
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.19045.0",
+          "lessThan": "10.0.19045.7807",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows 11 version 23H2",
+        "platforms": [
+         "ARM64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.22631.0",
+          "lessThan": "10.0.22631.7652",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows 11 Version 23H2",
+        "platforms": [
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.22631.0",
+          "lessThan": "10.0.22631.7652",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows 11 Version 24H2",
+        "platforms": [
+         "ARM64-based Systems",
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.26100.0",
+          "lessThan": "10.0.26100.9711",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows 11 Version 25H2",
+        "platforms": [
+         "ARM64-based Systems",
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.26200.0",
+          "lessThan": "10.0.26200.9711",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows 11 version 26H1",
+        "platforms": [
+         "ARM64-based Systems",
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.28000.0",
+          "lessThan": "10.0.28000.3231",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows 11 Version 26H2",
+        "platforms": [
+         "ARM64-based Systems",
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.26300.0",
+          "lessThan": "10.0.26300.9711",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows Server 2012",
+        "platforms": [
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "6.2.9200.0",
+          "lessThan": "6.2.9200.26434",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows Server 2012 (Server Core installation)",
+        "platforms": [
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "6.2.9200.0",
+          "lessThan": "6.2.9200.26434",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows Server 2012 R2",
+        "platforms": [
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "6.3.9600.0",
+          "lessThan": "6.3.9600.23470",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows Server 2012 R2 (Server Core installation)",
+        "platforms": [
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "6.3.9600.0",
+          "lessThan": "6.3.9600.23470",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows Server 2016",
+        "platforms": [
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.14393.0",
+          "lessThan": "10.0.14393.9612",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows Server 2016 (Server Core installation)",
+        "platforms": [
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.14393.0",
+          "lessThan": "10.0.14393.9612",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows Server 2019",
+        "platforms": [
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.17763.0",
+          "lessThan": "10.0.17763.9376",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows Server 2019 (Server Core installation)",
+        "platforms": [
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.17763.0",
+          "lessThan": "10.0.17763.9376",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows Server 2022",
+        "platforms": [
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.20348.0",
+          "lessThan": "10.0.20348.5761",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows Server 2025",
+        "platforms": [
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.26100.0",
+          "lessThan": "10.0.26100.33650",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       },
+       {
+        "vendor": "Microsoft",
+        "product": "Windows Server 2025 (Server Core installation)",
+        "platforms": [
+         "x64-based Systems"
+        ],
+        "versions": [
+         {
+          "version": "10.0.26100.0",
+          "lessThan": "10.0.26100.33650",
+          "versionType": "custom",
+          "status": "affected"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "metrics": {
+     "cvssMetricV31": [
+      {
+       "source": "secure@microsoft.com",
+       "type": "Secondary",
+       "cvssData": {
+        "version": "3.1",
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+        "baseScore": 9.8,
+        "baseSeverity": "CRITICAL",
+        "attackVector": "NETWORK",
+        "attackComplexity": "LOW",
+        "privilegesRequired": "NONE",
+        "userInteraction": "NONE",
+        "scope": "UNCHANGED",
+        "confidentialityImpact": "HIGH",
+        "integrityImpact": "HIGH",
+        "availabilityImpact": "HIGH"
+       },
+       "exploitabilityScore": 3.9,
+       "impactScore": 5.9
+      }
+     ],
+     "ssvcV203": [
+      {
+       "source": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+       "ssvcData": {
+        "timestamp": "2026-10-13T20:58:20.494558Z",
+        "id": "CVE-2026-70096",
+        "options": [
+         {
+          "exploitation": "none"
+         },
+         {
+          "automatable": "yes"
+         },
+         {
+          "technicalImpact": "total"
+         }
+        ],
+        "role": "CISA Coordinator",
+        "version": "2.0.3"
+       }
+      }
+     ]
+    },
+    "weaknesses": [
+     {
+      "source": "secure@microsoft.com",
+      "type": "Secondary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "CWE-122"
+       }
+      ]
+     }
+    ],
+    "references": [
+     {
+      "url": "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2026-70096",
+      "source": "secure@microsoft.com"
+     }
+    ]
+   }
+  },
+  "CVE-2026-120194": {
+   "cve": {
+    "id": "CVE-2026-120194",
+    "sourceIdentifier": "secalert@redhat.com",
+    "published": "2026-10-31T10:16:38.310",
+    "lastModified": "2026-11-06T07:17:01.563",
+    "vulnStatus": "Awaiting Analysis",
+    "cveTags": [],
+    "descriptions": [
+     {
+      "lang": "en",
+      "value": "A flaw was found in json-glib. The JSONPath slice evaluator used by json_path_query() can enter an infinite loop when given a slice expression with a negative step. An application that evaluates attacker-controlled JSONPath expressions can be forced into a hang, leading to a denial of service."
+     }
+    ],
+    "affected": [
+     {
+      "source": "secalert@redhat.com",
+      "affectedData": [
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat Enterprise Linux 10",
+        "defaultStatus": "affected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "json-glib",
+        "cpes": [
+         "cpe:/a:redhat:enterprise_linux:10"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat Enterprise Linux 7",
+        "defaultStatus": "affected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "json-glib",
+        "cpes": [
+         "cpe:/o:redhat:rhel_els:7"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat Enterprise Linux 8",
+        "defaultStatus": "affected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "json-glib",
+        "cpes": [
+         "cpe:/a:redhat:enterprise_linux:8"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat Enterprise Linux 9",
+        "defaultStatus": "affected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "json-glib",
+        "cpes": [
+         "cpe:/a:redhat:enterprise_linux:9"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-ai-gateway-operator-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unknown",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-core-bff-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-dashboard-operator-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unknown",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-dashboard-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-data-science-pipelines-operator-controller-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unknown",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-kf-notebook-controller-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-kserve-controller-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-kserve-llmisvc-controller-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-kserve-module-operator-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-kuberay-operator-controller-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-kube-rbac-proxy-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-llama-stack-k8s-operator-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-maas-controller-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-mlflow-operator-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-mlflow-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unknown",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-mod-arch-agent-ops-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unknown",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-mod-arch-automl-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unknown",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-mod-arch-autorag-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unknown",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-mod-arch-eval-hub-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unknown",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-mod-arch-gen-ai-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unknown",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-mod-arch-maas-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unknown",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-mod-arch-mlflow-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unknown",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-mod-arch-model-registry-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-model-controller-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-model-registry-operator-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-model-serving-api-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unknown",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-notebook-controller-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-ogx-k8s-operator-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-ogx-module-operator-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-training-operator-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-trustyai-service-operator-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift AI (RHOAI)",
+        "defaultStatus": "unaffected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "rhoai/odh-workbenches-operator-rhel9",
+        "cpes": [
+         "cpe:/a:redhat:openshift_ai"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift Container Platform 4",
+        "defaultStatus": "affected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "openshift/ose-rhel-coreos-8",
+        "cpes": [
+         "cpe:/a:redhat:openshift:4"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift Container Platform 4",
+        "defaultStatus": "affected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "openshift/ose-rhel-coreos-9",
+        "cpes": [
+         "cpe:/a:redhat:openshift:4"
+        ]
+       },
+       {
+        "vendor": "Red Hat",
+        "product": "Red Hat OpenShift Container Platform 5",
+        "defaultStatus": "affected",
+        "collectionURL": "https://access.redhat.com/downloads/content/package-browser/",
+        "packageName": "openshift/ose-rhel-coreos-9",
+        "cpes": [
+         "cpe:/a:redhat:openshift:5"
+        ]
+       }
+      ]
+     }
+    ],
+    "metrics": {
+     "cvssMetricV31": [
+      {
+       "source": "secalert@redhat.com",
+       "type": "Secondary",
+       "cvssData": {
+        "version": "3.1",
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+        "baseScore": 7.5,
+        "baseSeverity": "HIGH",
+        "attackVector": "NETWORK",
+        "attackComplexity": "LOW",
+        "privilegesRequired": "NONE",
+        "userInteraction": "NONE",
+        "scope": "UNCHANGED",
+        "confidentialityImpact": "NONE",
+        "integrityImpact": "NONE",
+        "availabilityImpact": "HIGH"
+       },
+       "exploitabilityScore": 3.9,
+       "impactScore": 3.6
+      }
+     ],
+     "ssvcV203": [
+      {
+       "source": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+       "ssvcData": {
+        "timestamp": "2026-11-02T17:12:50.335733Z",
+        "id": "CVE-2026-120194",
+        "options": [
+         {
+          "exploitation": "none"
+         },
+         {
+          "automatable": "yes"
+         },
+         {
+          "technicalImpact": "partial"
+         }
+        ],
+        "role": "CISA Coordinator",
+        "version": "2.0.3"
+       }
+      }
+     ]
+    },
+    "weaknesses": [
+     {
+      "source": "secalert@redhat.com",
+      "type": "Secondary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "CWE-835"
+       }
+      ]
+     }
+    ],
+    "references": [
+     {
+      "url": "https://access.redhat.com/security/cve/CVE-2026-120194",
+      "source": "secalert@redhat.com"
+     },
+     {
+      "url": "https://bugzilla.redhat.com/show_bug.cgi?id=2564418",
+      "source": "secalert@redhat.com"
+     },
+     {
+      "url": "https://gitlab.gnome.org/GNOME/json-glib/-/issues/96",
+      "source": "secalert@redhat.com"
      }
     ]
    }

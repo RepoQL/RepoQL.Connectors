@@ -25,6 +25,8 @@ Two jobs, both run by an agent over an uplink that holds the organization's code
 | Question | Read | Or query |
 |----------|------|----------|
 | What was reported this month? | `cves/2026-11/**` | `SELECT * FROM cve_recent(30)` |
+| Which CVEs name this product, whichever product the path names? | | `SELECT DISTINCT id, severity FROM cve_products WHERE product ILIKE '%Windows Server 2019%'` |
+| Which versions does it affect, and where does the range end? | the CVE's `product-<n>` nodes | `SELECT product, range, first_unaffected FROM cve_products WHERE id = 'CVE-2021-44228'` |
 | What is critical, and in what? | `cves/*/critical/**` | `SELECT id, type, vendor, product FROM cve_vulnerabilities WHERE severity = 'critical'` |
 | What is in libraries, or in one vendor's software? | `cves/*/*/libraries/**`, `cves/*/*/*/apache/**` | `SELECT * FROM cve_vulnerabilities WHERE type = 'libraries'` |
 | What is being exploited? | `overview.md` | `SELECT * FROM cve_known_exploited` |
@@ -71,6 +73,8 @@ Each entry's kind is its abstraction, `weakness.pillar`, `weakness.class`, `weak
   | `other` | | | |
 
   Rules choose it, in this order: the numbering authority, when it publishes one type of software (the Linux kernel's, Chrome's, and WordPress's); the vendor and product names it gives; the description; and the package's ecosystem. A model chooses it only for a CVE no rule recognises, and `type_rule` says which decided: `name:os`, `assigner:cms`, `package`, or `model`. Measured on 19,516 CVEs a model had read, the rules placed 71% of them, and agreed with the model on 85% of those. Neither has been checked against CVEs labelled by hand: label 30 to 50 of your own before you rely on either. A CVE neither can place is `unclassified`.
+- **A CVE's products** are the ones its numbering authority says are affected. A record also lists products to say they are unaffected, or that nobody knows yet, and those are left out. Each product is a node of the CVE, and `cve_products` has a row for each product and range. The path, and `vendor` and `product`, name only the first: a Windows flaw lists every Windows release and is filed under the first.
+- **A range of versions** is kept as the bounds the record states and written as comparisons, such as `>= 2.0, < 2.17.1`. `first_unaffected` is where the record says the range ends, which is not a confirmed fix. The bounds are text: the connector compares no versions. A file keeps 25 products and 20 ranges of each, and says so when a record states more.
 - **Attack vector** is the scorer's CVSS vector: `network`, `adjacent`, `local` or `physical`. A CVE nobody has scored has none.
 - **Code execution** is true when the description says an attacker runs code or commands, or when the CVE names a weakness that is code execution by definition, such as CWE-78, OS command injection.
 - **A CVE moves when its severity or type changes.** Its month never does. Link to a CVE by its origin, `https://www.cve.org/CVERecord?id=…`, which never moves.
@@ -108,7 +112,7 @@ rql connector test connector.ts --fixtures suite.kev.json
 
 Until rql reads the manifest's `package` block, run the suites on a staged copy: see [the repository's README](../../README.md#until-rql-reads-the-package-block).
 
-Every recorded answer is real: the NVD, EPSS, OSV and CWE responses in `fixtures/` were captured on 2026-11-05.
+Every recorded answer is real: the NVD, EPSS, OSV and CWE responses in `fixtures/` were captured on 2026-11-05, and a few records since, as each fixture file says.
 
 ## Install
 

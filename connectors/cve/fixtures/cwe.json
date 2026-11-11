@@ -1,5 +1,5 @@
 {
- "captured": "2026-11-05, from https://cwe-api.mitre.org/api/v1/cwe, trimmed to the weaknesses the fixture CVEs name, their ancestors in view 1000, and category 264; each record cut to the fields the connector reads, in the shape the API answers",
+ "captured": "2026-11-05, from https://cwe-api.mitre.org/api/v1/cwe, trimmed to the weaknesses the fixture CVEs name, their ancestors in view 1000, and category 264; each record cut to the fields the connector reads, in the shape the API answers; and CWE-122 and CWE-835 on 2026-11-11, which the tree here does not hold, each as the API answers one weakness asked for alone, cut the same way",
  "version": {
   "ContentVersion": "4.21",
   "ContentDate": "2026-10-28",
@@ -1980,5 +1980,153 @@
     }
    ]
   }
- ]
+ ],
+ "cited": {
+  "122": {
+   "Weaknesses": [
+    {
+     "ID": "122",
+     "Name": "Heap-based Buffer Overflow",
+     "Abstraction": "Variant",
+     "Structure": "Simple",
+     "Status": "Draft",
+     "Description": "The product writes past the end of a buffer that was allocated on the heap.",
+     "LikelihoodOfExploit": "High",
+     "RelatedWeaknesses": [
+      {
+       "Nature": "ChildOf",
+       "CweID": "788",
+       "ViewID": "1000",
+       "Ordinal": "Primary"
+      },
+      {
+       "Nature": "ChildOf",
+       "CweID": "787",
+       "ViewID": "1000"
+      }
+     ],
+     "CommonConsequences": [
+      {
+       "Scope": [
+        "Availability"
+       ],
+       "Impact": [
+        "DoS: Crash, Exit, or Restart",
+        "DoS: Resource Consumption (CPU)",
+        "DoS: Resource Consumption (Memory)"
+       ],
+       "Note": "Buffer overflows generally lead to crashes. Other attacks leading to lack of availability are possible, including putting the program into an infinite loop."
+      },
+      {
+       "Scope": [
+        "Integrity",
+        "Confidentiality",
+        "Availability",
+        "Access Control"
+       ],
+       "Impact": [
+        "Execute Unauthorized Code or Commands",
+        "Bypass Protection Mechanism",
+        "Modify Memory"
+       ],
+       "Note": "Buffer overflows often can be used to execute arbitrary code, which is usually outside the scope of a program's implicit security policy. Besides important user data, heap-based overflows can be used to overwrite function pointers that may be living in memory, pointing it to the attacker's code. Even in applications that do not explicitly use function pointers, the run-time will usually leave many in memory. For example, object methods in C++ are generally implemented using function pointers. Even in C programs, there is often a global offset table used by the underlying runtime."
+      },
+      {
+       "Scope": [
+        "Integrity",
+        "Confidentiality",
+        "Availability",
+        "Access Control",
+        "Other"
+       ],
+       "Impact": [
+        "Execute Unauthorized Code or Commands",
+        "Bypass Protection Mechanism",
+        "Other"
+       ],
+       "Note": "When the consequence is arbitrary code execution, this can often be used to subvert any other security service."
+      }
+     ],
+     "ApplicablePlatforms": [
+      {
+       "Type": "Language",
+       "Class": "Memory-Unsafe",
+       "Prevalence": "Often"
+      },
+      {
+       "Type": "Language",
+       "Name": "C",
+       "Prevalence": "Often"
+      },
+      {
+       "Type": "Language",
+       "Name": "C++",
+       "Prevalence": "Often"
+      },
+      {
+       "Type": "Technology",
+       "Class": "Not Technology-Specific",
+       "Prevalence": "Undetermined"
+      }
+     ]
+    }
+   ]
+  },
+  "835": {
+   "Weaknesses": [
+    {
+     "ID": "835",
+     "Name": "Loop with Unreachable Exit Condition",
+     "Abstraction": "Base",
+     "Structure": "Simple",
+     "Status": "Incomplete",
+     "Description": "The product contains an iteration or loop with an exit condition that cannot be reached, i.e., an infinite loop. (Roles: Common-Name, Impact-Oriented)",
+     "RelatedWeaknesses": [
+      {
+       "Nature": "ChildOf",
+       "CweID": "834",
+       "ViewID": "1000",
+       "Ordinal": "Primary"
+      },
+      {
+       "Nature": "ChildOf",
+       "CweID": "834",
+       "ViewID": "1003",
+       "Ordinal": "Primary"
+      },
+      {
+       "Nature": "CanFollow",
+       "CweID": "1322",
+       "ViewID": "1000"
+      }
+     ],
+     "CommonConsequences": [
+      {
+       "Scope": [
+        "Availability"
+       ],
+       "Impact": [
+        "DoS: Resource Consumption (CPU)",
+        "DoS: Resource Consumption (Memory)",
+        "DoS: Amplification"
+       ],
+       "Note": "An infinite loop will cause unexpected consumption of resources, such as CPU cycles or memory. The software's operation may slow down, or cause a long time to respond."
+      }
+     ],
+     "ApplicablePlatforms": [
+      {
+       "Type": "Language",
+       "Class": "Not Language-Specific",
+       "Prevalence": "Undetermined"
+      },
+      {
+       "Type": "Technology",
+       "Class": "Not Technology-Specific",
+       "Prevalence": "Undetermined"
+      }
+     ]
+    }
+   ]
+  }
+ }
 }

@@ -76,7 +76,7 @@ const CWE_EXTENDED_KEPT = 800;
 const CWE_SHAPE = 2;
 // The shape of a CVE record. Raise it when readNvd keeps something new, and the next pass lists every CVE of the scope
 // again, as a full pass would, so the import holds what the connector now renders without waiting for its full pass.
-const CVE_SHAPE = 2;
+const CVE_SHAPE = 3;
 const OSV_BATCH = 'https://api.osv.dev/v1/querybatch';
 // The most pages of 1,000 advisories cve_affects reads for one call. A function has 30 seconds.
 const OSV_PAGES = 20;
@@ -91,8 +91,12 @@ const DAY_MS = 86400000;
 const DECISIONS_PER_CALL = 25;
 // The longest description sent to the model. A longer one is cut, and the instructions say so.
 const DESCRIPTION_SENT = 6000;
-// The most products, references and metrics a record keeps, so one CVE that lists hundreds still fits a record.
+// The most products, ranges of one product, and references a record keeps, so one CVE that lists hundreds still fits a
+// record. A record that names more says how many it names, and its file says how many it keeps.
 const KEPT_PRODUCTS = 25;
+const KEPT_RANGES = 20;
+// The most ranges of one product a CVE's structure shows. Every range kept is in the product's node.
+const SHOWN_RANGES = 3;
 const KEPT_REFERENCES = 60;
 // The source identifiers NVD gives the scores of CISA's analysis and its own.
 const CISA_ADP = '134c704f-9b21-4f2e-91b3-4a467353bcc0';
@@ -246,6 +250,8 @@ interface Cve {
   assigner: string;
   description: string;
   products: Product[];
+  // How many affected products the record names, when it names more than `products` keeps.
+  products_total?: number;
   metrics: Metric[];
   cwes: string[];
   references: Reference[];
@@ -257,8 +263,15 @@ interface Cve {
 
 // One product the numbering authority says is affected, as it wrote it. A record with no affected block, as most from
 // before 2016 are, names its products only in NVD's CPE configurations, and `from` is then cpe, and `part` the CPE's part:
-// a for an application, o for an operating system, h for hardware.
-interface Product { vendor?: string; product?: string; package?: string; collection?: string; purl?: string; versions: string[]; from?: 'cpe'; part?: string }
+// a for an application, o for an operating system, h for hardware. `ranges_total` is how many ranges the record states,
+// when it states more than `ranges` keeps. `versions` is what a record of an older shape holds in place of `ranges`.
+interface Product { vendor?: string; product?: string; package?: string; collection?: string; purl?: string; ranges: Range[]; ranges_total?: number; versions?: string[]; from?: 'cpe'; part?: string }
+
+// One range of affected versions, as bounds: `from` and `through` are affected themselves, `after` and `below` are not.
+// `exact` is one version. `text` is what the record wrote where it wrote no version, such as "all versions prior to 2.1".
+// `unaffected` is each version from which the record says the range is no longer affected. A range with no bound is
+// every version. A bound is the record's own text: nothing here compares two versions.
+interface Range { from?: string; after?: string; below?: string; through?: string; exact?: string; text?: string; unaffected?: string[] }
 
 // CISA's SSVC decision points for a CVE: whether it is exploited (none, poc when an exploit is public, or active), whether
 // an attacker can automate it (yes or no), and how much control it gives (partial or total).
@@ -321,6 +334,21 @@ const CONCEPTS: Concept[] = [
     tags: ['cve', 'type', 'category', 'classification', 'rules', 'model', 'attack vector', 'network', 'remote code execution', 'rce', 'code execution'],
     why: 'NVD states no type of software. Rules read the names the numbering authority gives, the authority itself, the description and the packages; a model is asked only about a CVE no rule recognises. type_rule names the rule that decided, so a wrong type can be traced to its pattern in connector.ts.',
     example: "SELECT id FROM cve_vulnerabilities WHERE attack_vector = 'network' AND code_execution asks for remote code execution.",
+  },
+  {
+    name: 'CvePathNamesOneProduct', category: 'rule', relevance: ['cves/**'],
+    invariant: 'A CVE\'s path, and the vendor and product of cve_vulnerabilities, name only the first product its record lists: ask cve_products, or the products list, for every product.',
+    tags: ['cve', 'product', 'products', 'vendor', 'path', 'glob', 'affected', 'cve_products', 'first product', 'count', 'filter'],
+    why: 'One record often names many products: a Windows flaw lists every Windows release, and its file is under the first. A glob or a filter on product therefore finds a fraction of the CVEs that name a product, and answers with a count that looks whole.',
+    example: "SELECT DISTINCT id FROM cve_products WHERE product ILIKE '%Windows Server 2019%' finds every CVE that names it; a glob on cves/*/*/*/microsoft/windows-server-2019/** finds only those that name it first.",
+    depth: ['A record that names more products than a file keeps has the annotation cve.products-cut, and products_total says how many it names.', 'A library that a runtime or an application ships is filed under the library alone: a flaw in Brotli names Brotli, not the Node.js that bundles it.'],
+  },
+  {
+    name: 'CveRangeIsTheRecordsWords', category: 'rule', relevance: ['cves/**'],
+    invariant: 'A range of cve_products is the bounds a CVE\'s record states, as text: a version in no range is not thereby unaffected, and first_unaffected is where the record says a range ends, not a fix anyone confirmed.',
+    tags: ['cve', 'version', 'range', 'affected', 'unaffected', 'fixed', 'fix version', 'upgrade', 'first_unaffected', 'version_below', 'end of life', 'semver'],
+    why: 'An authority writes only the versions it checked. A release line that is past its end of life is usually not listed, though the flaw is in it. Some authorities, Node.js among them, list only the last affected release of each line as one exact version, though every earlier release of the line is affected.',
+    depth: ['version_from and version_through are affected themselves; version_after and version_below are not.', 'The bounds are text: SQL compares them as strings, which orders 2.10 before 2.9. Compare versions yourself.', 'A null first_unaffected means the record states no end, not that no fix exists.'],
   },
 ];
 
@@ -848,6 +876,7 @@ function readNvd(item: Json): Omit<Cve, 'severity'> {
     throw new Error('NVD listed an entry that is not a CVE.');
   for (const field of ['published', 'lastModified', 'vulnStatus', 'sourceIdentifier'])
     if (typeof cve[field] !== 'string') throw new Error(`NVD listed ${cve.id} with no ${field}.`);
+  const affected = productsOf(cve);
   const english = (cve.descriptions as { lang?: string; value?: string }[] | undefined)?.find(text => text.lang === 'en')?.value ?? '';
   return {
     id: cve.id,
@@ -856,7 +885,8 @@ function readNvd(item: Json): Omit<Cve, 'severity'> {
     modified: utc(cve.lastModified),
     assigner: cve.sourceIdentifier,
     description: english.replace(/\p{Cs}/gu, '�'),
-    products: productsOf(cve),
+    products: affected.products,
+    ...(affected.total !== undefined ? { products_total: affected.total } : {}),
     metrics: metricsOf(cve),
     cwes: cwesOf(cve),
     references: referencesOf(cve),
@@ -898,37 +928,112 @@ function ssvcOf(cve: Record<string, any>): { ssvc?: Ssvc } {
   return Object.keys(ssvc).length > 0 ? { ssvc } : {};
 }
 
-// The products the numbering authority names, from its own affected block, which NVD carries as `affected`.
-function productsOf(cve: Record<string, any>): Product[] {
+// The products the numbering authority says are affected, from its own affected block, which NVD carries as `affected`.
+// A record also names products to say they are not affected, or that nobody knows yet, as Red Hat's do for each stream
+// it ships: those are no product of the CVE's.
+function productsOf(cve: Record<string, any>): { products: Product[]; total?: number } {
   const products: Product[] = [];
   for (const source of (cve.affected ?? []) as { source?: string; affectedData?: Record<string, any>[] }[]) {
     if (source.source !== cve.sourceIdentifier) continue;
     for (const data of source.affectedData ?? []) {
-      const versions = ((data.versions ?? []) as Record<string, any>[]).filter(version => version.status === 'affected').map(versionWords);
+      const ranges = rangesOf(data);
+      if (ranges === undefined) continue;
       products.push({
         vendor: named(data.vendor), product: named(data.product), package: named(data.packageName),
         collection: typeof data.collectionURL === 'string' ? data.collectionURL : undefined,
-        purl: typeof data.packageURL === 'string' ? data.packageURL : undefined, versions: [...new Set(versions)].slice(0, 20),
+        purl: typeof data.packageURL === 'string' ? data.packageURL : undefined,
+        ranges: ranges.slice(0, KEPT_RANGES), ...(ranges.length > KEPT_RANGES ? { ranges_total: ranges.length } : {}),
       });
     }
   }
   // A product with no name at all names nothing, as an older record's "n/a" does.
   const namedProducts = products.filter(entry => entry.vendor || entry.product || entry.package || entry.purl);
-  return (namedProducts.length > 0 ? namedProducts : cpeProductsOf(cve)).slice(0, KEPT_PRODUCTS);
+  const all = namedProducts.length > 0 ? namedProducts : cpeProductsOf(cve);
+  return { products: all.slice(0, KEPT_PRODUCTS), ...(all.length > KEPT_PRODUCTS ? { total: all.length } : {}) };
 }
 
-// One affected range in words: "1.0 up to 1.2.1.0", "before 2.3", or one version.
-function versionWords(version: Record<string, any>): string {
-  const from = oneLine(version.version);
-  const start = from !== undefined && from !== '0' && from !== '*' ? from : undefined;
-  const lessThan = oneLine(version.lessThan), through = oneLine(version.lessThanOrEqual);
-  if (lessThan) return start ? `${start} up to ${lessThan}` : `before ${lessThan}`;
-  if (through) return start ? `${start} through ${through}` : `through ${through}`;
-  return start ?? 'every version';
+// The affected ranges of one product of a record, or undefined when the record does not say the product is affected.
+// A record states a status for the product, `defaultStatus`, and one for each version or range it lists:
+//
+//   - a listed range that is affected is a range;
+//   - a product affected by default, with a range that is unaffected from a version onwards, is affected below it;
+//   - a product affected by default, with nothing else to go on, is affected in every version;
+//   - a product with no status at all and no versions is one an older record simply names, so it is kept;
+//   - a product unaffected or unknown by default, with no affected range, is not affected.
+function rangesOf(data: Record<string, any>): Range[] | undefined {
+  const versions = (Array.isArray(data.versions) ? data.versions : []) as Record<string, any>[];
+  const ranges = versions.filter(version => version.status === 'affected').map(rangeOf);
+  if (data.defaultStatus === 'affected') {
+    const exceptions: string[] = [];
+    for (const version of versions.filter(entry => entry.status === 'unaffected')) {
+      const range = rangeOf(version);
+      // "Unaffected from 26.4-29, with no end" says every version below 26.4-29 is affected.
+      if (range.from !== undefined && range.below === undefined && range.through === undefined) ranges.push({ below: range.from });
+      else exceptions.push(rangeWords(range));
+    }
+    if (ranges.length === 0) ranges.push(exceptions.length > 0 ? { unaffected: exceptions } : {});
+  }
+  else if (ranges.length === 0 && (data.defaultStatus !== undefined || versions.length > 0)) return undefined;
+  const seen = new Set<string>();
+  return ranges.filter(range => { const words = rangeWords(range); return seen.has(words) ? false : (seen.add(words), true); });
+}
+
+// One version entry of a record as a range. The record gives a start in `version` and an end in `lessThan` or
+// `lessThanOrEqual`, or one version alone. Many authorities instead write the comparison inside `version`, as
+// ">= 4.0.0, < 4.7.10", and that is read as the bounds it states.
+function rangeOf(version: Record<string, any>): Range {
+  const written = oneLine(version.version);
+  const below = bound(version.lessThan), through = bound(version.lessThanOrEqual);
+  const unaffected = ((Array.isArray(version.changes) ? version.changes : []) as { at?: unknown; status?: unknown }[])
+    .filter(change => change.status === 'unaffected').map(change => oneLine(change.at)).filter((at): at is string => at !== undefined);
+  const fixed = unaffected.length > 0 ? { unaffected } : {};
+  if (version.lessThan !== undefined || version.lessThanOrEqual !== undefined) {
+    const from = start(written);
+    // A range from a version through the same version is that one version, as Node.js writes the last affected release
+    // of each line: ">= 22.23.3, <= 22.23.3" would read as a checked range, which it is not.
+    if (from !== undefined && from === through && below === undefined) return { exact: from, ...fixed };
+    // A range that starts where it ends, as Chrome's "155.0.8059.39 up to 155.0.8059.39", holds no version: it says before.
+    return stripped({ from: from !== undefined && from === below ? undefined : from, below, through, ...fixed }) as Range;
+  }
+  if (written === undefined || start(written) === undefined) return fixed;
+  const comparisons = written.split(/\s*,\s*/).map(part => /^(>=|<=|>|<|=)\s*(\S+)$/.exec(part));
+  if (comparisons.every(match => match !== null)) {
+    const range: Range = {};
+    for (const [, sign, value] of comparisons as RegExpExecArray[])
+      range[sign === '>=' ? 'from' : sign === '>' ? 'after' : sign === '<' ? 'below' : sign === '<=' ? 'through' : 'exact'] = value;
+    return { ...range, ...fixed };
+  }
+  // One version is a word with a digit in it. Anything else is the record's own prose, kept as it is written.
+  return /^\S+$/.test(written) && /\d/.test(written) && !written.includes('*') ? { exact: written, ...fixed } : { text: written, ...fixed };
+}
+
+// The version a range starts at, or undefined when the record states none: 0, a placeholder, or a wildcard.
+function start(version: string | undefined): string | undefined {
+  return version === undefined || /^0(\.0)*$/.test(version) || version === '*' || named(version) === undefined ? undefined : version;
+}
+
+// The version a range ends at, or undefined when the record states none: `*`, a wildcard on a name, as Log4j's
+// "log4j-core*", or the address Microsoft writes in place of a version. A wildcard on a version, as "3.18.*", is an end.
+function bound(version: unknown): string | undefined {
+  const end = oneLine(version);
+  return end === undefined || !/\d/.test(end) || /[^\d.]\*$/.test(end) || /^https?:\/\//.test(end) ? undefined : end;
+}
+
+// One range as comparisons, such as ">= 2.0, < 2.17.1", so that nobody has to know whether "up to" includes its end.
+function rangeWords(range: Range): string {
+  const bounds = [range.from && `>= ${range.from}`, range.after && `> ${range.after}`, range.below && `< ${range.below}`, range.through && `<= ${range.through}`].filter(Boolean) as string[];
+  const open = (range.from ?? range.after) !== undefined && range.below === undefined && range.through === undefined;
+  const words = range.text ?? range.exact ?? (bounds.length > 0 ? `${bounds.join(', ')}${open ? ', no upper bound stated' : ''}` : 'every version');
+  return range.unaffected?.length ? `${words}, unaffected from ${range.unaffected.join(', ')}` : words;
+}
+
+// The ranges of a product as a reader sees them. A record of an older shape holds words in place of ranges.
+function rangesIn(product: Product): Range[] {
+  return product.ranges ?? (product.versions ?? []).map(text => ({ text }));
 }
 
 // The products NVD's analysts name in its CPE configurations, for a record whose numbering authority named none: each
-// vendor and product once, applications before operating systems before hardware, with its affected ranges in words.
+// vendor and product once, applications before operating systems before hardware, with its affected ranges.
 function cpeProductsOf(cve: Record<string, any>): Product[] {
   const byName = new Map<string, Product>();
   for (const configuration of (cve.configurations ?? []) as { nodes?: { cpeMatch?: Record<string, any>[] }[] }[])
@@ -940,24 +1045,21 @@ function cpeProductsOf(cve: Record<string, any>): Product[] {
         const [part, vendor, product, version, update] = [fields[2], cpeName(fields[3]), cpeName(fields[4]), cpeValue(fields[5]), cpeValue(fields[6])];
         if (!vendor && !product) continue;
         const key = `${vendor}:${product}`;
-        const entry = byName.get(key) ?? { vendor, product, versions: [], from: 'cpe' as const, part };
-        const words = cpeRangeWords(match, version && update ? `${version} ${update}` : version);
-        if (!entry.versions.includes(words) && entry.versions.length < 20) entry.versions.push(words);
+        const entry: Product = byName.get(key) ?? { vendor, product, ranges: [], from: 'cpe' as const, part };
+        const range = cpeRange(match, version && update ? `${version} ${update}` : version);
+        if (!entry.ranges.some(held => rangeWords(held) === rangeWords(range))) {
+          if (entry.ranges.length < KEPT_RANGES) entry.ranges.push(range);
+          else entry.ranges_total = (entry.ranges_total ?? KEPT_RANGES) + 1;
+        }
         byName.set(key, entry);
       }
   const order = (part: string) => part === 'a' ? 0 : part === 'o' ? 1 : 2;
   return [...byName.values()].sort((a, b) => order(a.part ?? '') - order(b.part ?? ''));
 }
 
-function cpeRangeWords(match: Record<string, any>, version: string | undefined): string {
-  const startIncluding = oneLine(match.versionStartIncluding), startExcluding = oneLine(match.versionStartExcluding);
-  const endExcluding = oneLine(match.versionEndExcluding), endIncluding = oneLine(match.versionEndIncluding);
-  const start = startIncluding ?? (startExcluding ? `after ${startExcluding}` : undefined);
-  if (endExcluding) return start ? `${start} up to ${endExcluding}` : `before ${endExcluding}`;
-  if (endIncluding) return start ? `${start} through ${endIncluding}` : `through ${endIncluding}`;
-  if (startIncluding) return `${startIncluding} and later`;
-  if (startExcluding) return `after ${startExcluding}`;
-  return version ?? 'every version';
+function cpeRange(match: Record<string, any>, version: string | undefined): Range {
+  const range = stripped({ from: oneLine(match.versionStartIncluding), after: oneLine(match.versionStartExcluding), below: oneLine(match.versionEndExcluding), through: oneLine(match.versionEndIncluding) }) as Range;
+  return Object.keys(range).length > 0 || version === undefined ? range : { exact: version };
 }
 
 // A CPE vendor or product in words: CPE writes spaces as underscores, so linux_kernel is "linux kernel".
@@ -1010,11 +1112,15 @@ function utc(instant: string): string {
   return /(Z|[+-]\d{2}:\d{2})$/.test(instant) ? instant : `${instant}Z`;
 }
 
-// A CVE cut until it fits the manifest's 64 KiB: references first, then products, then the description.
+// A CVE cut until it fits the manifest's 64 KiB: references first, then products, then the description. A record that
+// loses products says how many it named.
 function fit(cve: Cve): Cve {
   const cut: Cve = { ...cve, references: [...cve.references], products: [...cve.products] };
   while (utf8Size(cut) > 60000 && cut.references.length > 0) cut.references.pop();
-  while (utf8Size(cut) > 60000 && cut.products.length > 1) cut.products.pop();
+  while (utf8Size(cut) > 60000 && cut.products.length > 1) {
+    cut.products_total ??= cve.products.length;
+    cut.products.pop();
+  }
   if (utf8Size(cut) > 60000) cut.description = cut.description.slice(0, 20000);
   return cut;
 }
@@ -1315,6 +1421,9 @@ function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string
   const properties: Record<string, Json> = {
     id: cve.id, status: cve.status, published: cve.published, modified: cve.modified, assigner: cve.assigner,
     severity, month: cve.published.slice(0, 7), cwes: cve.cwes, packages: purls, known_exploited: cve.kev !== undefined,
+    // Every product by name, where vendor and product below name only the one the path is filed under.
+    products: [...new Set(cve.products.map(productName).filter((name): name is string => name !== undefined))],
+    products_total: cve.products_total ?? cve.products.length,
   };
   // The names the record states, never the path's placeholder for a name it does not.
   const stated = first?.vendor ?? (first?.collection ? /^https?:\/\/([^/]+)/.exec(first.collection)?.[1] : undefined);
@@ -1343,10 +1452,15 @@ function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string
     if (path) object = object.withFileReference(path);
   }
 
+  // Each product is a node, with its ranges as words in `versions` and as bounds in `ranges`, which cve_products reads.
   cve.products.forEach((entry, index) => {
-    const names = [entry.vendor, entry.product ?? entry.package].filter(Boolean).join(' ') || entry.purl || 'an unnamed product';
-    object = object.withChildNode(`product-${index + 1}`, 'product', `${names}${entry.versions.length > 0 ? ` — ${entry.versions.join('; ')}` : ''}`, node =>
-      node.withProperties(stripped({ vendor: entry.vendor, product: entry.product, package: entry.package, purl: entry.purl, collection: entry.collection, versions: entry.versions, from: entry.from })));
+    const ranges = rangesIn(entry);
+    object = object.withChildNode(`product-${index + 1}`, 'product', productLine(entry, ranges.length), node =>
+      node.withProperties(stripped({
+        vendor: entry.vendor, product: entry.product, package: entry.package, purl: entry.purl, collection: entry.collection,
+        versions: ranges.map(rangeWords), ranges: ranges.map(range => ({ ...range, range: rangeWords(range) })) as Json,
+        ranges_total: entry.ranges_total, from: entry.from,
+      })));
   });
   cve.metrics.forEach((entry, index) => {
     object = object.withChildNode(`score-${index + 1}`, 'score', `CVSS ${entry.version} ${entry.score} from ${scorerWords(entry.by)}`, node =>
@@ -1362,6 +1476,9 @@ function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string
       { rule: 'cve.known-exploited', details: stripped({ added: cve.kev.added, due: cve.kev.due }) });
   if (!rejected && (label?.type ?? UNREAD) === UNREAD)
     object = object.withAnnotation('info', 'Neither the rules nor the model could say what type of software it is in yet, so its type is unclassified. That is not a reading of nothing.', { rule: 'cve.unread' });
+  if (cve.products_total !== undefined && cve.products_total > cve.products.length)
+    object = object.withAnnotation('info', `The record names ${cve.products_total} affected products, and this file keeps the first ${cve.products.length}. Read the rest at ${originOf(cve.id)}.`,
+      { rule: 'cve.products-cut', details: { named: cve.products_total, kept: cve.products.length } });
   if (rejected)
     object = object.withAnnotation('info', 'Its numbering authority rejected it: it is not a vulnerability record, and no product is affected.', { rule: 'cve.rejected' });
 
@@ -1369,8 +1486,7 @@ function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string
     ? ['rejected by its numbering authority', `published ${cve.published.slice(0, 10)} · rejected ${cve.modified.slice(0, 10)}`]
     : [
       flawSentence(cve),
-      first ? `${[first.vendor, first.product ?? first.package].filter(Boolean).join(' ') || 'no product named'}${first.versions.length ? ` — ${first.versions.join('; ')}` : ''}`
-        : cve.products.length > 0 ? `${cve.products.length} products of ${new Set(cve.products.map(entry => entry.vendor)).size} vendors, in product-1 to product-${cve.products.length}` : 'no product named',
+      ...productLines(cve, first),
       `${severity}${metric ? ` (CVSS ${metric.version} ${metric.score} from ${scorerWords(metric.by)})` : ''} · ${label ? label.type : UNREAD}${label?.attack_vector ? ` · ${label.attack_vector} attack` : ''}${label?.code_execution ? ' · code execution' : ''}${exploitWords(cve)}`,
       ...(cve.cwes.length > 0 ? [`weaknesses ${cve.cwes.map(cwe => weaknessNames.has(cwe) ? `${cwe} ${weaknessNames.get(cwe)}` : cwe).join('; ')}`] : []),
       ...(purls.length > 0 ? [`packages ${purls.join(', ')}`] : []),
@@ -1378,6 +1494,35 @@ function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string
       `published ${cve.published.slice(0, 10)} · modified ${cve.modified.slice(0, 10)} · ${cve.status}`,
     ];
   return object.withStructure(structure.join('\n'));
+}
+
+// A product's name as the record states it: its vendor and its product, or its package, or its package URL.
+function productName(entry: Product): string | undefined {
+  return [entry.vendor, entry.product ?? entry.package].filter(Boolean).join(' ') || entry.purl;
+}
+
+// One product and its affected ranges on a line, such as "Apache Log4j2 — >= 2.13.0, < 2.15.0". It shows `shown` ranges
+// and says how many more the node holds, and how many more the record states than the node keeps.
+function productLine(entry: Product, shown: number): string {
+  const ranges = rangesIn(entry);
+  const total = entry.ranges_total ?? ranges.length;
+  const words = ranges.slice(0, shown).map(rangeWords);
+  if (total > words.length) words.push(`and ${total - words.length} more range${total - words.length === 1 ? '' : 's'}`);
+  return `${productName(entry) ?? 'an unnamed product'}${words.length > 0 ? ` — ${words.join('; ')}` : ''}`;
+}
+
+// The lines of a CVE's structure that say where the flaw is: every product the file keeps, by name, each with its
+// first ranges, so a search for any of them finds the CVE and not only a search for the one its path names. The lead
+// product, which the path is filed under, comes first.
+function productLines(cve: Cve, first: Product | undefined): string[] {
+  if (cve.products.length === 0) return ['no product named'];
+  const total = cve.products_total ?? cve.products.length;
+  const lines = [...(first ? [first] : []), ...cve.products.filter(entry => entry !== first)].map(entry => productLine(entry, SHOWN_RANGES));
+  if (cve.products.length > 1 || total > 1)
+    lines.push(total > cve.products.length
+      ? `${total} affected products named: this file keeps the first ${cve.products.length}, in product-1 to product-${cve.products.length}`
+      : `${total} affected products, in product-1 to product-${total}`);
+  return lines;
 }
 
 // What is known of its exploitation, in the words someone would search for: CISA's catalog first, then CISA's SSVC
