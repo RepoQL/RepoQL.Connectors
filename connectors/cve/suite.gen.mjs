@@ -50,6 +50,8 @@ const LOGURU = real('CVE-2026-120217');      // arrives late, and the model cann
 const LOG4J = real('CVE-2021-44228');        // published years before any window, and known exploited
 const PHP = real('CVE-2012-1823');           // known exploited, from before numbering authorities named products: only NVD's CPEs do, and NVD lists 29 of its references twice
 const TEAMCITY = real('CVE-2026-111094');     // its numbering authority writes the affected versions across two lines
+const OFFICE = real('CVE-2026-70096');        // names 27 products, Windows Server 2019 the 23rd: more than a file keeps
+const JSON_GLIB = real('CVE-2026-120194');    // names 39 products, and says 7 are affected, 20 are not and 12 are unknown
 
 // The numbering authority scores the Perl package: the shape of a CNA's CVSS 3.1 metric as NVD carries it.
 const BROTLI_SCORED = structuredClone(BROTLI);
@@ -66,6 +68,12 @@ LOGURU_LATE.cve.lastModified = '2026-11-05T15:02:10.880';
 // The TeamCity CVE reaches NVD's modified listing after the last pass, as the loguru one does.
 const TEAMCITY_LATE = structuredClone(TEAMCITY);
 TEAMCITY_LATE.cve.lastModified = '2026-11-05T16:30:00.000';
+
+// The Office and json-glib CVEs reach NVD's modified listing after the last pass too.
+const OFFICE_LATE = structuredClone(OFFICE);
+OFFICE_LATE.cve.lastModified = '2026-11-05T17:05:00.000';
+const JSON_GLIB_LATE = structuredClone(JSON_GLIB);
+JSON_GLIB_LATE.cve.lastModified = '2026-11-05T17:15:00.000';
 
 // The plugin's CVE is rejected: the shape of CVE-2026-80726, NVD's own rejected record.
 const PLUGIN_REJECTED = { cve: { id: PLUGIN.cve.id, sourceIdentifier: PLUGIN.cve.sourceIdentifier, published: PLUGIN.cve.published,
@@ -126,6 +134,8 @@ const cweRead = [
   cweGet(`${CWE}/weakness/${CWE_IDS.join(',')}`, { Weaknesses: CWE_FIXTURE.weaknesses }),
 ];
 const CWE_ENTRIES = CWE_IDS.length + CWE_FIXTURE.categories.Categories.length;
+// A weakness a held CVE names that the tree does not hold is read alone, on the next pass that reads the CWE list.
+const cweCited = Object.keys(CWE_FIXTURE.cited).map(Number).sort((a, b) => a - b).map(id => cweGet(`${CWE}/weakness/${id}`, CWE_FIXTURE.cited[id]));
 // The same read, with MITRE having renamed one weakness, as it does between versions.
 const cweReadRenaming = (id, name) => cweRead.map(interaction => interaction.url === `${CWE}/weakness/${CWE_IDS.join(',')}`
   ? { ...interaction, json: { Weaknesses: CWE_FIXTURE.weaknesses.map(weakness => weakness.ID === String(id) ? { ...weakness, Name: name } : weakness) } }
@@ -176,6 +186,8 @@ const LITELLM_PATH = 'cves/2026-07/high/ai/berriai/litellm/CVE-2026-59822.rqlobj
 const SHAREPOINT_PATH = 'cves/2026-07/medium/cms/microsoft/microsoft-sharepoint-enterprise-server-2016/CVE-2026-56164.rqlobject';
 const LOGURU_PATH = 'cves/2026-11/low/unclassified/delgan/loguru/CVE-2026-120217.rqlobject';
 const TEAMCITY_PATH = 'cves/2026-10/high/devtools/jetbrains/teamcity/CVE-2026-111094.rqlobject';
+const OFFICE_PATH = 'cves/2026-10/critical/apps/microsoft/microsoft-365-apps-for-enterprise/CVE-2026-70096.rqlobject';
+const JSON_GLIB_PATH = 'cves/2026-10/high/os/red-hat/red-hat-enterprise-linux-10/CVE-2026-120194.rqlobject';
 const LOG4J_PATH = 'cves/2021-12/critical/libraries/apache-software-foundation/apache-log4j2/CVE-2021-44228.rqlobject';
 const PHP_PATH = 'cves/2012-05/critical/runtimes/php/php/CVE-2012-1823.rqlobject';
 const origin = id => `https://www.cve.org/CVERecord?id=${id}`;
@@ -208,7 +220,8 @@ const suite = {
           [DLINK_PATH]: { contains: ['"cvss_score":9.3', '"cvss_source":"cna"', '"type":"devices"', '"type_rule":"name:devices"', '"kind":"vulnerability.critical.devices"'] },
           [PLUGIN_PATH]: { contains: ['"cvss_source":"cisa"', '"severity":"medium"'] },
           [LITELLM_PATH]: { contains: ['"known_exploited":true', '"kev_added":"2026-09-02"', 'cve.known-exploited'] },
-          [SHAREPOINT_PATH]: { contains: ['"cvss_score":5.3', '"cvss_source":"cna"', 'CVSS 3.1 9.8 from NVD'] },
+          [SHAREPOINT_PATH]: { contains: ['"cvss_score":5.3', '"cvss_source":"cna"', 'CVSS 3.1 9.8 from NVD', '"products":["Microsoft Microsoft SharePoint Enterprise Server 2016","Microsoft Microsoft SharePoint Server 2019","Microsoft Microsoft SharePoint Server Subscription Edition"]',
+            'Microsoft Microsoft SharePoint Enterprise Server 2016 — >= 16.0.0, < 16.0.5561.1001\\nMicrosoft Microsoft SharePoint Server 2019 — >= 16.0.0, < 16.0.10417.20175', '3 affected products, in product-1 to product-3'] },
           // Withdrawn on 2026-09-03, before the 30-day window, and not known exploited: the import does not hold it.
           'rejected/CVE-2026-80726.rqlobject': { absent: true },
           'scores/epss.csv': { contains: ['cve,epss,percentile,date', 'CVE-2026-120189,0.01346,0.7151,2026-11-04'] },
@@ -223,9 +236,24 @@ const suite = {
           'weaknesses/README.md': { contains: ['# CWE weaknesses', 'content version 4.21 of 2026-10-28', 'Copyright © 2006–2026, The MITRE Corporation'] },
           'types/devices.md': { contains: ['1 CVEs, at `cves/*/*/devices/**`'] },
         },
-        concepts: 3, terms: 17,
+        concepts: 5, terms: 17,
         views: {
-          cve_vulnerabilities: { rows: 6, contains: [{ id: 'CVE-2026-120189', severity: 'critical', type: 'devices' }] },
+          cve_vulnerabilities: { rows: 6, contains: [{ id: 'CVE-2026-120189', severity: 'critical', type: 'devices' }, { id: 'CVE-2026-56164', product: 'Microsoft SharePoint Enterprise Server 2016', products_total: 3 }] },
+          // SharePoint's record names three products, and its path only the first: each has a row, with its bounds.
+          cve_products: { rows: 8, contains: [
+            { id: 'CVE-2026-56164', product: 'Microsoft SharePoint Server 2019', range: '>= 16.0.0, < 16.0.10417.20175', version_from: '16.0.0', version_below: '16.0.10417.20175', first_unaffected: '16.0.10417.20175' },
+            { id: 'CVE-2026-59822', product: 'litellm', range: '< 1.84.0', version_below: '1.84.0' },
+            { id: 'CVE-2026-120189', product: 'DIR-505', range: '1.10B02', version_exact: '1.10B02' },
+            { id: 'CVE-2021-44228', product: 'Apache Log4j2', range: '>= 2.0-beta9, no upper bound stated, unaffected from 2.3.1, 2.12.2, 2.15.0', first_unaffected: '2.3.1' },
+          ] },
+          // 1.9.0 is below 1.84.0 as versions, and above it as text.
+          "cve_in_range('litellm', '1.9.0')": { rows: 1, contains: [{ id: 'CVE-2026-59822', range: '< 1.84.0', in_range: 'yes' }] },
+          "cve_in_range('LiteLLM', 'v1.84')": { rows: 1, contains: [{ id: 'CVE-2026-59822', in_range: 'no' }] },
+          // 16 is 16.0.0: trailing zeros are no version of their own. Each of SharePoint's three products has a row.
+          "cve_in_range('sharepoint', '16')": { rows: 3, contains: [{ product: 'Microsoft SharePoint Server 2019', in_range: 'yes' }] },
+          // A bound with a suffix, a version asked that is a build name, and a range that ends nowhere: none is guessed.
+          "cve_in_range('log4j', '2.14.1')": { rows: 1, contains: [{ id: 'CVE-2021-44228', in_range: 'cannot tell' }] },
+          "cve_in_range('DIR-505', '1.10B02')": { rows: 1, contains: [{ id: 'CVE-2026-120189', in_range: 'cannot tell' }] },
           cve_known_exploited: { rows: 3, contains: [{ id: 'CVE-2026-59822' }, { id: 'CVE-2026-56164' }, { id: 'CVE-2021-44228' }] },
           cve_packages: { rows: 1, contains: [{ purl: 'pkg:cpan/XS-libbrotli' }] },
           cve_weaknesses: { rows: CWE_ENTRIES, contains: [{ id: 'CWE-400', abstraction: 'class', cves: 1 }, { id: 'CWE-306', cves: 2 }, { id: 'CWE-1333', abstraction: 'base', cves: 0 }] },
@@ -278,7 +306,35 @@ const suite = {
       clock: '2026-11-05T17:00:00Z', pass: 'incremental',
       interactions: [...changedSince('2026-11-05T15:02:10.880Z', '2026-11-05T17:00:00Z', [TEAMCITY_LATE]), epssDay],
       expect: {
-        paths: { [TEAMCITY_PATH]: { contains: ['"type":"devtools"', '"versions":["before 2026.2, 2026.1.4, 2025.11.8"]', 'JetBrains TeamCity — before 2026.2, 2026.1.4, 2025.11.8'] } },
+        paths: { [TEAMCITY_PATH]: { contains: ['"type":"devtools"', '"versions":["< 2026.2, 2026.1.4, 2025.11.8"]', 'JetBrains TeamCity — < 2026.2, 2026.1.4, 2025.11.8'] } },
+      },
+    },
+    {
+      name: 'a CVE arrives that names 27 products, more than a file keeps: its file says so, and its 23rd product is found by name though the path names only the first',
+      clock: '2026-11-05T17:10:00Z', pass: 'incremental',
+      interactions: [...changedSince('2026-11-05T16:30:00.000Z', '2026-11-05T17:10:00Z', [OFFICE_LATE]), epssDay],
+      expect: {
+        paths: { [OFFICE_PATH]: { contains: ['"product":"Microsoft 365 Apps for Enterprise"', '"products_total":27', 'cve.products-cut', 'The record names 27 affected products, and this file keeps the first 25.',
+          // Microsoft writes an address where the first product's range ends, which is no version.
+          'Microsoft Microsoft 365 Apps for Enterprise — >= 16.0.1, no upper bound stated\\n', 'Microsoft Windows Server 2019 — >= 10.0.17763.0, < 10.0.17763.9376\\n',
+          '27 affected products named: this file keeps the first 25, in product-1 to product-25', '"key":"product-25"'] } },
+        views: {
+          cve_vulnerabilities: { contains: [{ id: 'CVE-2026-70096', product: 'Microsoft 365 Apps for Enterprise', products_total: 27 }] },
+          cve_products: { contains: [{ id: 'CVE-2026-70096', vendor: 'Microsoft', product: 'Windows Server 2019', version_from: '10.0.17763.0', version_below: '10.0.17763.9376', first_unaffected: '10.0.17763.9376', severity: 'critical' },
+            { id: 'CVE-2026-70096', product: 'Microsoft 365 Apps for Enterprise', range: '>= 16.0.1, no upper bound stated', version_from: '16.0.1', first_unaffected: null }] },
+          // The build before the fix is in the range, and the fixed build is not. Windows Server 2019 has two products here.
+          "cve_in_range('Windows Server 2019', '10.0.17763.9000')": { rows: 2, contains: [{ id: 'CVE-2026-70096', product: 'Windows Server 2019', in_range: 'yes' }, { product: 'Windows Server 2019 (Server Core installation)', in_range: 'yes' }] },
+          "cve_in_range('Windows Server 2019', '10.0.17763.9376')": { rows: 2, contains: [{ id: 'CVE-2026-70096', product: 'Windows Server 2019', in_range: 'no' }] },
+        },
+      },
+    },
+    {
+      name: 'a CVE arrives whose record names 39 products and says only 7 are affected: the 20 it says are unaffected and the 12 unknown are no product of it',
+      clock: '2026-11-05T17:20:00Z', pass: 'incremental',
+      interactions: [...changedSince('2026-11-05T17:05:00.000Z', '2026-11-05T17:20:00Z', [JSON_GLIB_LATE]), epssDay],
+      expect: {
+        paths: { [JSON_GLIB_PATH]: { contains: ['"products_total":7', 'Red Hat Red Hat Enterprise Linux 10 — every version', '7 affected products, in product-1 to product-7', '"key":"product-7"'] } },
+        views: { cve_products: { contains: [{ id: 'CVE-2026-120194', product: 'Red Hat OpenShift Container Platform 5', package: 'openshift/ose-rhel-coreos-9', range: 'every version' }] } },
       },
     },
     {
@@ -301,11 +357,12 @@ const suite = {
     {
       name: 'a year later, a full pass lists nothing published in the window: every CVE leaves, with its score, reading, place and file, but the known exploited, which stay whatever their age',
       clock: '2027-11-12T06:00:00Z', pass: 'full',
-      interactions: [...firstRead('2027-11-12T06:00:00Z', [LITELLM, SHAREPOINT, LOG4J]), ...cweRead, epssPages],
+      // The Office and json-glib CVEs are still held when the CWE list is read, so the weaknesses they name are read alone.
+      interactions: [...firstRead('2027-11-12T06:00:00Z', [LITELLM, SHAREPOINT, LOG4J]), ...cweRead, ...cweCited, epssPages],
       expect: {
-        collections: { cves: 3, epss: 3, labels: 3, placed: 3, weaknesses: CWE_ENTRIES },
+        collections: { cves: 3, epss: 3, labels: 3, placed: 3, weaknesses: CWE_ENTRIES + cweCited.length },
         paths: {
-          [BROTLI_HIGH]: { absent: true }, [LOGURU_PATH]: { absent: true }, [TEAMCITY_PATH]: { absent: true },
+          [BROTLI_HIGH]: { absent: true }, [LOGURU_PATH]: { absent: true }, [TEAMCITY_PATH]: { absent: true }, [OFFICE_PATH]: { absent: true }, [JSON_GLIB_PATH]: { absent: true },
           'rejected/CVE-2026-80726.rqlobject': { absent: true }, 'rejected/CVE-2026-113482.rqlobject': { absent: true },
           [LITELLM_PATH]: { contains: ['"known_exploited":true'] }, [LOG4J_PATH]: { contains: ['"known_exploited":true'] },
           'overview.md': { contains: ['the CVEs published in the last 30 days, and every CVE CISA lists as known exploited, whatever its age: 3 CVEs'] },
@@ -332,7 +389,7 @@ const kevSuite = {
         rows: { 'state/watermark': { value: { modified: KEV_WATERMARK } } },
         paths: {
           [LOG4J_PATH]: { origin: origin('CVE-2021-44228'), contains: ['"known_exploited":true', 'cve.known-exploited'] },
-          [PHP_PATH]: { origin: origin('CVE-2012-1823'), contains: ['"vendor":"php"', '"product":"php"', '"products_from":"cpe"', '"from":"cpe"', 'php php — before 5.3.12; 5.4.0 up to 5.4.2',
+          [PHP_PATH]: { origin: origin('CVE-2012-1823'), contains: ['"vendor":"php"', '"product":"php"', '"products_from":"cpe"', '"from":"cpe"', 'php php — < 5.3.12; >= 5.4.0, < 5.4.2',
             '"type":"runtimes"', '"type_rule":"name:runtimes"', '"exploitation":"active"', '"automatable":"yes"', '"technical_impact":"total"', 'known exploited since 2022-03-25 · automatable', 'weaknesses/CWE-77.rqlobject'] },
           'scores/epss.csv': { contains: ['CVE-2021-44228,0.99999,1,2026-11-04'] },
           [LITELLM_PATH]: { contains: ['"known_exploited":true'] }, [SHAREPOINT_PATH]: { contains: ['"known_exploited":true'] },

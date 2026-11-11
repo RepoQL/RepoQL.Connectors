@@ -2,13 +2,14 @@
 # every change: a published version never changes.
 package:
   id: RepoQL.Connectors.Cve
-  version: 1.3.0
+  version: 1.4.0
   authors: RepoQL
 scheme: cve
 title: Publicly reported vulnerabilities (CVEs)
 summary: Copies recent and known-exploited CVEs from NVD, with EPSS exploit likelihood and MITRE's CWE weaknesses they name, reads what type of software each concerns, by rules and a model for the rest, and files them by month, severity and type. It only reads.
 calls: [parse, fetch, analyze, render, invoke]
-# Version 1 keeps each CVE as NVD answers it, cut to what render shows: see Cve in connector.ts.
+# Version 1 keeps each CVE as NVD answers it, cut to what render shows: see Cve in connector.ts. A change to what a
+# CVE's row keeps raises CVE_SHAPE there instead, and the next pass reads every CVE again.
 recordsVersion: 1
 # cve://recent holds the CVEs published in the window and every known exploited one; cve://kev only the known exploited.
 uri:

@@ -7137,7 +7137,7 @@
        "\"product\":\"php\"",
        "\"products_from\":\"cpe\"",
        "\"from\":\"cpe\"",
-       "php php — before 5.3.12; 5.4.0 up to 5.4.2",
+       "php php — < 5.3.12; >= 5.4.0, < 5.4.2",
        "\"type\":\"runtimes\"",
        "\"type_rule\":\"name:runtimes\"",
        "\"exploitation\":\"active\"",
