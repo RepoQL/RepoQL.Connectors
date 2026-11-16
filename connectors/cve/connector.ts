@@ -34,7 +34,8 @@
 //
 // The files:
 //
-//   overview.md                                                   what the import holds, by month, severity and type
+//   overview.md                                                   what the import holds, by month, severity and type,
+//                                                                 and in cve://recent how many NVD published each of the last days
 //   types/<type>.md                                               what one type means, and how many CVEs it holds
 //   cves/<YYYY-MM>/<severity>/<type>/<vendor>/<product>/<id>.rqlobject   one CVE
 //   rejected/<id>.rqlobject                                       a CVE its numbering authority withdrew
@@ -720,7 +721,9 @@ export default class Cves extends Connector {
 
     const whole = this.db.get('state', 'listing') !== undefined;
     const counts = this.counts();
-    this.files.write('overview.md', overviewFile(counts, whole, this.scope() === 'exploited' ? undefined : this.windowDays(), types, this.db.get<{ date: string }>('state', 'epss')?.date), {});
+    const windowDays = this.scope() === 'exploited' ? undefined : this.windowDays();
+    const published = windowDays === undefined ? undefined : this.publishedByDay();
+    this.files.write('overview.md', overviewFile(counts, whole, windowDays, types, this.db.get<{ date: string }>('state', 'epss')?.date, published), {});
     for (const type of [...TYPE_NAMES, UNREAD]) this.files.write(`types/${type}.md`, typeFile(type, counts), {});
 
     // A weakness file names its relatives, so when any entry of the CWE list changes, every file is written again: the
@@ -800,6 +803,21 @@ export default class Cves extends Connector {
       if (page.length < 5000) return lines.join('\n') + '\n';
       after = String(page[page.length - 1].key);
     }
+  }
+
+  // How many CVEs NVD published on each of the last PUBLISHED_DAYS UTC days, withdrawn ones too, as NVD's own listing
+  // by pubStartDate and pubEndDate counts them. The days end on the day of the watermark, the newest lastModified NVD
+  // has answered, never this machine's clock, so the overview says what the import holds as of its last pass and its
+  // bytes change only when NVD's answers do. Undefined until a pass has recorded a watermark.
+  private publishedByDay(): PublishedByDay | undefined {
+    const asOf = this.db.get<{ modified: string }>('state', 'watermark')?.modified;
+    if (asOf === undefined) return undefined;
+    const days = Array.from({ length: PUBLISHED_DAYS }, (_, index) => isoMinusDays(asOf, PUBLISHED_DAYS - 1 - index).slice(0, 10));
+    const rows = this.db.query(
+      `SELECT substr(value->>'published', 1, 10) AS day, count(*) AS n FROM kv
+       WHERE collection = 'cves' AND (value->>'published') >= $1 GROUP BY day`, [days[0]]);
+    const byDay = new Map(rows.map(row => [String(row.day), Number(row.n)]));
+    return { asOf, days: days.map(day => ({ day, cves: byDay.get(day) ?? 0 })) };
   }
 
   // How many CVEs each month, severity and type holds, counted by one query over the CVEs and the model's readings.
@@ -1548,11 +1566,17 @@ function stripped(values: Record<string, Json | undefined>): Record<string, Json
 
 interface Counts { total: number; rejected: number; byMonth: Record<string, number>; bySeverity: Record<string, number>; byType: Record<string, number>; kev: number }
 
+// How many CVEs NVD published on each UTC day, oldest first, as of the newest lastModified NVD has answered.
+interface PublishedByDay { asOf: string; days: { day: string; cves: number }[] }
+
+// How many days the overview counts the CVEs NVD published on.
+const PUBLISHED_DAYS = 7;
+
 const SEVERITIES = ['critical', 'high', 'medium', 'low', 'none', 'unscored'];
 
 // What the import holds, in one read, with a form for while the first full pass is still arriving.
 // windowDays is undefined for cve://kev, which holds only the known exploited CVEs.
-function overviewFile(counts: Counts, whole: boolean, windowDays: number | undefined, types: ReadonlySet<string> | undefined, epssDate: string | undefined): string {
+function overviewFile(counts: Counts, whole: boolean, windowDays: number | undefined, types: ReadonlySet<string> | undefined, epssDate: string | undefined, published?: PublishedByDay): string {
   const scope = windowDays === undefined
     ? 'the CVEs CISA lists as known exploited, whatever their age'
     : `the CVEs published in the last ${windowDays} days, and every CVE CISA lists as known exploited, whatever its age`;
@@ -1562,6 +1586,18 @@ function overviewFile(counts: Counts, whole: boolean, windowDays: number | undef
     : `The first full read of NVD is still arriving: ${counts.total - counts.rejected} CVEs so far, of ${scope}.`);
   lines.push('', `A CVE is at \`cves/<month>/<severity>/<type>/<vendor>/<product>/<id>.rqlobject\`, so \`cves/<month>/critical/**\` is a month's critical CVEs.${types ? ` Only these types are written: ${[...types].join(', ')}.` : ''}`);
   if (epssDate) lines.push('', `Exploit likelihood is in \`scores/epss.csv\`, as EPSS published it on ${epssDate}.`);
+  lines.push('', 'When NVD published each CVE and last modified it are UTC instants: the columns `published` and `modified` of `cve_vulnerabilities`, the properties of the same names on its object, and the last line of its structure, such as `published 2026-11-03 · modified 2026-11-07`. A file\'s mtime is when NVD last modified the CVE, not when it published it.');
+  if (published) {
+    lines.push('', `## Published in the last ${published.days.length} days`, '',
+      `How many CVEs NVD published on each UTC day, withdrawn ones too, as of ${published.asOf}, the newest change NVD had answered at the last pass, so the last day may still be arriving.`,
+      '', '| Day (UTC) | CVEs |', '|-----------|-----:|');
+    for (const entry of [...published.days].reverse()) lines.push(`| ${entry.day} | ${entry.cves} |`);
+    lines.push('', 'For other days, count them from `cve_vulnerabilities`. This counts today, UTC, and the two days before it:', '', '```sql',
+      `SELECT CAST(published AS DATE) AS day, count(*) AS cves`,
+      `FROM cve_vulnerabilities`,
+      `WHERE starts_with(uri, 'cve://recent/') AND published >= CAST(now() AT TIME ZONE 'UTC' AS DATE) - INTERVAL 2 DAY`,
+      `GROUP BY day ORDER BY day`, '```');
+  }
   lines.push('', '## By month', '', '| Month | CVEs |', '|-------|-----:|');
   for (const month of Object.keys(counts.byMonth).sort().reverse()) lines.push(`| \`cves/${month}/\` | ${counts.byMonth[month]} |`);
   lines.push('', '## By severity', '', '| Severity | CVEs |', '|----------|-----:|');

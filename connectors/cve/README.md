@@ -24,7 +24,8 @@ Two jobs, both run by an agent over an uplink that holds the organization's code
 
 | Question | Read | Or query |
 |----------|------|----------|
-| What was reported this month? | `cves/2026-11/**` | `SELECT * FROM cve_recent(30)` |
+| What was published this month? | `cves/2026-11/**` | `SELECT * FROM cve_vulnerabilities WHERE month = '2026-11'` |
+| How many were published on each of the last few days? | `overview.md`, for the last 7 | `SELECT CAST(published AS DATE) AS day, count(*) FROM cve_vulnerabilities WHERE published >= CAST(now() AT TIME ZONE 'UTC' AS DATE) - INTERVAL 2 DAY GROUP BY day` |
 | Which CVEs name this product, whichever product the path names? | | `SELECT DISTINCT id, severity FROM cve_products WHERE product ILIKE '%Windows Server 2019%'` |
 | Which versions does it affect, and where does the range end? | the CVE's `product-<n>` nodes | `SELECT product, range, first_unaffected FROM cve_products WHERE id = 'CVE-2021-44228'` |
 | Is this version in a CVE's affected range? | | `SELECT id, range, in_range FROM cve_in_range('Windows Server 2019', '10.0.17763.9000') WHERE in_range <> 'no'` |
