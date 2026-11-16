@@ -1,4 +1,4 @@
--- The CVEs NVD published or modified in the last days days, newest first, a row each with what cve_vulnerabilities holds: what a nightly job asks first.
+-- The CVEs NVD modified in the last days days, which includes every one it published in them, newest change first, a row each with what cve_vulnerabilities holds: what a nightly job asks first. To count the CVEs NVD published in a window, filter cve_vulnerabilities on published instead.
 macro (days) table
 SELECT *
 FROM cve_vulnerabilities

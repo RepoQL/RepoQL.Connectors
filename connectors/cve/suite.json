@@ -7237,7 +7237,12 @@
      "overview.md": {
       "contains": [
        "every CVE CISA lists as known exploited, whatever its age: 6 CVEs, and 0 withdrawn",
-       "3 are known exploited"
+       "3 are known exploited",
+       "## Published in the last 7 days",
+       "as of 2026-11-02T19:35:33.347Z",
+       "| 2026-11-02 | 0 |\n| 2026-11-01 | 3 |",
+       "| 2026-10-27 | 0 |\n\n",
+       "published >= CAST(now() AT TIME ZONE 'UTC' AS DATE) - INTERVAL 2 DAY"
       ]
      },
      "weaknesses/CWE-1333.rqlobject": {

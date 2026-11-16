@@ -1,6 +1,6 @@
 ---
 description: How to ask a cve import which vulnerabilities were reported, how severe they are, what software they are in, which are exploited, and which of the workspace's dependencies an advisory names — the glob to read or the query to run for each.
-tags: [cve, cwe, weakness, weaknesses, cwe_weaknesses, vulnerability, vulnerabilities, security, advisory, nvd, cvss, severity, critical, kev, known exploited, epss, exploit, osv, ghsa, dependency, dependencies, package, purl, affected, reachable, fix, patch, cve_vulnerabilities, cve_products, cve_in_range, cve_version_key, in range, is this version affected, compare versions, product, products, version, range, version range, affected versions, fixed version, first_unaffected, cve_recent, cve_known_exploited, cve_packages, cve_dependency_findings, cve_advisories, cve_affects, cve_epss]
+tags: [cve, published, publish date, published in the last days, new cves, per day, modified, last modified, lastModified, cwe, weakness, weaknesses, cwe_weaknesses, vulnerability, vulnerabilities, security, advisory, nvd, cvss, severity, critical, kev, known exploited, epss, exploit, osv, ghsa, dependency, dependencies, package, purl, affected, reachable, fix, patch, cve_vulnerabilities, cve_products, cve_in_range, cve_version_key, in range, is this version affected, compare versions, product, products, version, range, version range, affected versions, fixed version, first_unaffected, cve_recent, cve_known_exploited, cve_packages, cve_dependency_findings, cve_advisories, cve_affects, cve_epss]
 ---
 
 # Asking a cve import
@@ -17,7 +17,9 @@ The import has two trees. `cves/**` holds the CVEs and `weaknesses/**` the CWE e
 
 | Question | Read | Or query |
 |----------|------|----------|
-| What was reported this month? | `cve://recent/cves/2026-11/**` | `SELECT * FROM cve_recent(30)` |
+| What was published this month? | `cve://recent/cves/2026-11/**` | `SELECT * FROM cve_vulnerabilities WHERE month = '2026-11'` |
+| How many were published on each of the last few days? | `overview.md`, for the last 7 | `SELECT CAST(published AS DATE) AS day, count(*) AS cves FROM cve_vulnerabilities WHERE starts_with(uri, 'cve://recent/') AND published >= CAST(now() AT TIME ZONE 'UTC' AS DATE) - INTERVAL 2 DAY GROUP BY day ORDER BY day` |
+| What did NVD publish or change in the last few days? | | `SELECT * FROM cve_recent(3)` |
 | What is critical? | `cve://recent/cves/*/critical/**` | `SELECT id, type, vendor, product FROM cve_vulnerabilities WHERE severity = 'critical'` |
 | What is in libraries, or in one vendor's software? | `cve://recent/cves/*/*/libraries/**`, `cve://recent/cves/*/*/*/apache/**` | `SELECT * FROM cve_vulnerabilities WHERE type = 'libraries'` |
 | What is being exploited now? | `overview.md` | `SELECT * FROM cve_known_exploited` |
@@ -41,7 +43,7 @@ The import has two trees. `cves/**` holds the CVEs and `weaknesses/**` the CWE e
 - **Headline:** the id and the first sentence of the description that says something of the flaw.
 - **`=> structure`:** what the flaw is, every product the file keeps with its first affected ranges, its severity and the score that set it, its type, whether it is known exploited, has a public exploit or can be automated, its weaknesses by name, its packages, and whether a fix is referenced, in a few lines. Semantic search matches a CVE on this text, so it leads with the words of its description. A weakness's structure likewise leads with its name, the other names MITRE gives it, such as ReDoS, and what it is.
 - **Content:** the description as NVD holds it.
-- **Properties:** every fact `cve_vulnerabilities` reads, such as `severity`, `cvss_score`, `cvss_source`, `type`, `type_rule`, `attack_vector`, `code_execution`, `known_exploited`, `kev_added`, `exploitation`, `automatable`, `technical_impact`, `packages`, `cwes`, `products`, every product by name, and `products_total`, how many the record names.
+- **Properties:** every fact `cve_vulnerabilities` reads, such as `published` and `modified`, NVD's UTC instants, `severity`, `cvss_score`, `cvss_source`, `type`, `type_rule`, `attack_vector`, `code_execution`, `known_exploited`, `kev_added`, `exploitation`, `automatable`, `technical_impact`, `packages`, `cwes`, `products`, every product by name, and `products_total`, how many the record names.
 
 **Its nodes,** each read alone by its key:
 - `product-<n>`: each product the numbering authority says is affected, with its ranges as comparisons in `versions` and as bounds in `ranges`, or, for a record that names none, as most from before 2016 do, each that NVD's CPE configurations name, with `from: cpe`. A product the record lists only to say it is unaffected, or that nobody knows yet, has no node;
@@ -66,6 +68,7 @@ The import has two trees. `cves/**` holds the CVEs and `weaknesses/**` the CWE e
 - **Severity has one scorer.** It is the first of: the numbering authority's CVSS, then CISA's, then NVD's, with 4.0 before 3.1. `cvss_source` says which. `unscored` means nobody has scored it yet, not that it is harmless.
 - **Type is a rule's reading, or a model's.** `type_rule` says which: a rule names where it matched, such as `name:os` or `assigner:cms`, and `model` means no rule recognised the CVE. `unclassified` means neither could say. `attack_vector` is the scorer's CVSS vector, and `code_execution` the CVE's own words and weaknesses, so `WHERE attack_vector = 'network' AND code_execution` asks for remote code execution.
 - **Exploited, or exploitable.** `known_exploited` is CISA's catalog. `exploitation` is CISA's SSVC decision, which it makes for almost every new CVE: `active` is exploited, `poc` means an exploit is public though nobody is yet seen using it, and `none` that neither is known. `WHERE exploitation = 'poc' AND automatable = 'yes'` asks for the CVEs most likely to be exploited next. Null means CISA has not decided, not that no exploit exists.
+- **Published is not modified.** `published` is when NVD published a CVE, and `modified` when it last changed it, both UTC. A file's mtime is `modified`, so counting files by mtime counts changes, not new CVEs. `cve_recent(days)` holds every CVE modified in the window, which includes each one published in it: to count new CVEs, filter on `published`. The path's month is the month of `published`.
 - **A CVE's file moves when its severity or type changes.** Cite it by its origin, `https://www.cve.org/CVERecord?id=<id>`, never by its path.
 - **`cve_affects`, `cve_advisories` and `cve_dependency_findings` ask OSV, live.** They send the package names and versions a query passes them, and answer from OSV's advisories, not from this import. Every other view reads only what the import holds.
 - **Whether a CVE affects this code is a question for the code.** Start from `cve_dependency_findings('file:///**')` or the CVE's packages. It matches packages by name, so a component a package embeds, such as a native library or a runtime, is found only by searching the CVEs' products and descriptions. Then read its `fix-<n>` nodes to learn the vulnerable function, and trace that function through the workspace with `explore` and its references.

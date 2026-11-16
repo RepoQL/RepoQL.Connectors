@@ -226,7 +226,10 @@ const suite = {
           'rejected/CVE-2026-80726.rqlobject': { absent: true },
           'scores/epss.csv': { contains: ['cve,epss,percentile,date', 'CVE-2026-120189,0.01346,0.7151,2026-11-04'] },
           [LOG4J_PATH]: { origin: origin('CVE-2021-44228'), contains: ['"known_exploited":true', '"kev_added":"2021-12-10"', '"type":"libraries"', '"type_rule":"model"', '"attack_vector":"network"', '"code_execution":true', 'network attack · code execution', 'weaknesses/CWE-400.rqlobject', 'weaknesses/CWE-502.rqlobject'] },
-          'overview.md': { contains: ['every CVE CISA lists as known exploited, whatever its age: 6 CVEs, and 0 withdrawn', '3 are known exploited'] },
+          'overview.md': { contains: ['every CVE CISA lists as known exploited, whatever its age: 6 CVEs, and 0 withdrawn', '3 are known exploited',
+            // The days end on the watermark's day, NVD's newest change, and each counts the CVEs NVD published on it.
+            '## Published in the last 7 days', 'as of 2026-11-02T19:35:33.347Z', '| 2026-11-02 | 0 |\n| 2026-11-01 | 3 |', '| 2026-10-27 | 0 |\n\n',
+            "published >= CAST(now() AT TIME ZONE 'UTC' AS DATE) - INTERVAL 2 DAY"] },
           'weaknesses/CWE-1333.rqlobject': { origin: 'https://cwe.mitre.org/data/definitions/1333.html',
             contains: ['"kind":"weakness.base"', 'CWE-1333 — Inefficient Regular Expression Complexity', '"key":"child-of-407"', '"type":"EXTENDS"', 'weaknesses/CWE-407.rqlobject',
               '"structure":"CWE-1333 Inefficient Regular Expression Complexity, also called ReDoS, Regular Expression Denial of Service, Catastrophic backtracking\\nThe product uses a regular expression with a worst-case computational complexity that is inefficient and possibly exponential.\\nbase weakness · likelihood of exploit high · leads to DoS: Resource Consumption (CPU)\\nchild of CWE-407 Inefficient Algorithmic Complexity'] },
