@@ -27,6 +27,8 @@ const QUESTIONS = new Function(`return (${literal[1]});`)();
 const TYPE_NAMES = Object.keys(QUESTIONS.type.criteria);
 
 const NVD = 'https://services.nvd.nist.gov/rest/json/cves/2.0';
+const NVD_HISTORY = 'https://services.nvd.nist.gov/rest/json/cvehistory/2.0';
+const CISA_ADP = '134c704f-9b21-4f2e-91b3-4a467353bcc0';
 const EPSS = 'https://api.first.org/data/v1/epss';
 const OSV_BATCH = 'https://api.osv.dev/v1/querybatch';
 const CWE = 'https://cwe-api.mitre.org/api/v1/cwe';
@@ -75,6 +77,30 @@ OFFICE_LATE.cve.lastModified = '2026-11-05T17:05:00.000';
 const JSON_GLIB_LATE = structuredClone(JSON_GLIB);
 JSON_GLIB_LATE.cve.lastModified = '2026-11-05T17:15:00.000';
 
+// An old CVE that is not known exploited, rescored inside the window: the PHP CVE as NVD holds it, without CISA's
+// catalog entry, so that only its rescoring brings it into cve://recent. CISA's CVSS 3.1 score was 5.3, and CISA changed
+// it to the 9.8 the record holds on 2026-10-20; on 2026-11-05 NVD adds its own 9.8.
+const OLD_PHP = structuredClone(PHP);
+for (const field of ['cisaExploitAdd', 'cisaActionDue', 'cisaRequiredAction', 'cisaVulnerabilityName']) delete OLD_PHP.cve[field];
+OLD_PHP.cve.lastModified = '2026-10-20T14:15:00.000';
+const OLD_PHP_NVD = structuredClone(OLD_PHP);
+OLD_PHP_NVD.cve.lastModified = '2026-11-05T17:21:00.000';
+OLD_PHP_NVD.cve.metrics.cvssMetricV31.push({ source: 'nvd@nist.gov', type: 'Primary', cvssData: {
+  version: '3.1', vectorString: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H', baseScore: 9.8, baseSeverity: 'CRITICAL', attackVector: 'NETWORK',
+  attackComplexity: 'LOW', privilegesRequired: 'NONE', userInteraction: 'NONE', scope: 'UNCHANGED', confidentialityImpact: 'HIGH',
+  integrityImpact: 'HIGH', availabilityImpact: 'HIGH' }, exploitabilityScore: 3.9, impactScore: 5.9 });
+// The two entries of NVD's change history that rescore it, in the shape NVD answers them, and one that is no rescoring:
+// the scores a CVE arrives with.
+const CISA_RESCORE = { cveId: 'CVE-2012-1823', eventName: 'CVE Modified', cveChangeId: '5B0F4C1A-2C55-4E0B-9C7E-4B8D2E1F0A11', sourceIdentifier: CISA_ADP,
+  created: '2026-10-20T14:15:00.000', details: [
+    { action: 'Removed', type: 'CVSS V3.1', oldValue: 'AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N' },
+    { action: 'Added', type: 'CVSS V3.1', newValue: 'AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H' },
+    { action: 'Added', type: 'Reference', newValue: 'https://www.php.net/ChangeLog-5.php' }] };
+const NVD_RESCORE = { cveId: 'CVE-2012-1823', eventName: 'Reanalysis', cveChangeId: '9E3A7D20-6F1B-4C2D-8A90-1D2C3B4A5E66', sourceIdentifier: 'nvd@nist.gov',
+  created: '2026-11-05T17:21:00.000', details: [{ action: 'Added', type: 'CVSS V3.1', newValue: 'AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H' }] };
+const DLINK_RECEIVED = { cveId: DLINK.cve.id, eventName: 'New CVE Received', cveChangeId: '0C1D2E3F-4A5B-4C6D-8E7F-901A2B3C4D5E', sourceIdentifier: 'cna@vuldb.com',
+  created: '2026-11-01T01:17:16.877', details: [{ action: 'Added', type: 'CVSS V3.1', newValue: 'AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H' }] };
+
 // The plugin's CVE is rejected: the shape of CVE-2026-80726, NVD's own rejected record.
 const PLUGIN_REJECTED = { cve: { id: PLUGIN.cve.id, sourceIdentifier: PLUGIN.cve.sourceIdentifier, published: PLUGIN.cve.published,
   lastModified: '2026-11-05T11:40:02.517', vulnStatus: 'Rejected', cveTags: [],
@@ -116,6 +142,19 @@ const knownExploited = (now, records) => ({
   method: 'GET', status: 200, headers: { 'content-type': 'application/json' },
   url: `${NVD}?hasKev&resultsPerPage=200&startIndex=0`, json: page(records.filter(exploited), now.replace('Z', '')),
 });
+
+// One request of NVD's change history for each window, answering the changes NVD recorded in it.
+function history(from, now, changes = []) {
+  return windows(from, now).map(([start, end]) => {
+    const inside = changes.filter(change => { const at = Date.parse(utc(change.created)); return at >= Date.parse(start) && at <= Date.parse(end); });
+    return { method: 'GET', status: 200, headers: { 'content-type': 'application/json' },
+      url: `${NVD_HISTORY}?changeStartDate=${encodeURIComponent(start)}&changeEndDate=${encodeURIComponent(end)}&resultsPerPage=2000&startIndex=0`,
+      json: { resultsPerPage: inside.length, startIndex: 0, totalResults: inside.length, format: 'NVD_CVEHistory', version: '2.0', timestamp: now.replace('Z', ''), cveChanges: inside.map(change => ({ change })) } };
+  });
+}
+// NVD's answer to one CVE asked by its id.
+const byId = (record, now) => ({ method: 'GET', status: 200, headers: { 'content-type': 'application/json' },
+  url: `${NVD}?cveId=${record.cve.id}`, json: page([record], now.replace('Z', '')) });
 
 // A full pass of cve://recent lists the window, then the known exploited.
 const firstRead = (now, records, days = 30) => [...listing('pub', iso(Date.parse(now) - days * DAY_MS), now, records, 'published'), knownExploited(now, records)];
@@ -194,6 +233,9 @@ const origin = id => `https://www.cve.org/CVERecord?id=${id}`;
 
 const G1 = '2026-11-05T06:00:00Z';
 const WATERMARK = '2026-11-02T19:35:33.347Z';
+// The newest change the first read's change history answered: NVD receiving the D-Link CVE.
+const HISTORY_MARK = '2026-11-01T01:17:16.877Z';
+const OLD_PHP_PATH = PHP_PATH;
 
 const suite = {
   import: 'cve://recent',
@@ -211,10 +253,13 @@ const suite = {
     {
       name: 'the first read: every CVE published in the 30 days arrives, and every known exploited one whatever its age; the model reads each, and each is filed by month, severity and type',
       clock: G1, pass: 'full',
-      interactions: [...firstRead(G1, [BROTLI, DLINK, PLUGIN, LITELLM, SHAREPOINT, REJECTED, LOG4J]), ...cweRead, epssPages],
+      // The change history names the PHP CVE, published in 2012 and listed by neither the window nor the known exploited,
+      // so it is read by its id. The D-Link CVE's first scores are no rescoring.
+      interactions: [...firstRead(G1, [BROTLI, DLINK, PLUGIN, LITELLM, SHAREPOINT, REJECTED, LOG4J]),
+        ...history(iso(Date.parse(G1) - 30 * DAY_MS), G1, [DLINK_RECEIVED, CISA_RESCORE]), byId(OLD_PHP, G1), ...cweRead, epssPages],
       expect: {
-        collections: { cves: 6, epss: 6, labels: 6, placed: 6, weaknesses: CWE_ENTRIES },
-        rows: { 'state/watermark': { value: { modified: WATERMARK } }, 'state/epss': { value: { date: '2026-11-04' } }, 'state/cwe': { value: { version: '4.21 of 2026-10-28', shape: 2 } } },
+        collections: { cves: 7, epss: 6, labels: 7, placed: 7, rescored: 1, weaknesses: CWE_ENTRIES },
+        rows: { 'state/watermark': { value: { modified: WATERMARK } }, 'state/history': { value: { changed: HISTORY_MARK } }, 'state/epss': { value: { date: '2026-11-04' } }, 'state/cwe': { value: { version: '4.21 of 2026-10-28', shape: 2 } } },
         paths: {
           [BROTLI_UNSCORED]: { origin: origin('CVE-2026-115946'), contains: ['"severity":"unscored"', '"type":"libraries"', 'pkg:cpan/XS-libbrotli'] },
           [DLINK_PATH]: { contains: ['"cvss_score":9.3', '"cvss_source":"cna"', '"type":"devices"', '"type_rule":"name:devices"', '"kind":"vulnerability.critical.devices"'] },
@@ -226,7 +271,11 @@ const suite = {
           'rejected/CVE-2026-80726.rqlobject': { absent: true },
           'scores/epss.csv': { contains: ['cve,epss,percentile,date', 'CVE-2026-120189,0.01346,0.7151,2026-11-04'] },
           [LOG4J_PATH]: { origin: origin('CVE-2021-44228'), contains: ['"known_exploited":true', '"kev_added":"2021-12-10"', '"type":"libraries"', '"type_rule":"model"', '"attack_vector":"network"', '"code_execution":true', 'network attack · code execution', 'weaknesses/CWE-400.rqlobject', 'weaknesses/CWE-502.rqlobject'] },
-          'overview.md': { contains: ['every CVE CISA lists as known exploited, whatever its age: 6 CVEs, and 0 withdrawn', '3 are known exploited',
+          // Rescored by CISA in the window, it is held under the month it was published, though not known exploited.
+          [OLD_PHP_PATH]: { origin: origin('CVE-2012-1823'), contains: ['"known_exploited":false', '"rescored":"2026-10-20T14:15:00.000Z"',
+            '"score_changes":["CVSS 3.1 from CISA: 5.3 → 9.8 on 2026-10-20"]', 'rescored CVSS 3.1 from CISA: 5.3 → 9.8 on 2026-10-20\\npublished 2012-05-11', 'cve.rescored'] },
+          'overview.md': { contains: ['every CVE whose CVSS score NVD changed in them, and every CVE CISA lists as known exploited, whatever its age: 7 CVEs, and 0 withdrawn', '3 are known exploited',
+            '## Rescored', '1 CVEs published before the window are here because NVD\'s change history shows', 'AND modified >= (now() AT TIME ZONE \'UTC\') - INTERVAL 30 DAY',
             // The days end on the watermark's day, NVD's newest change, and each counts the CVEs NVD published on it.
             '## Published in the last 7 days', 'as of 2026-11-02T19:35:33.347Z', '| 2026-11-02 | 0 |\n| 2026-11-01 | 3 |', '| 2026-10-27 | 0 |\n\n',
             "published >= CAST(now() AT TIME ZONE 'UTC' AS DATE) - INTERVAL 2 DAY"] },
@@ -241,9 +290,10 @@ const suite = {
         },
         concepts: 5, terms: 17,
         views: {
-          cve_vulnerabilities: { rows: 6, contains: [{ id: 'CVE-2026-120189', severity: 'critical', type: 'devices' }, { id: 'CVE-2026-56164', product: 'Microsoft SharePoint Enterprise Server 2016', products_total: 3 }] },
+          cve_vulnerabilities: { rows: 7, contains: [{ id: 'CVE-2026-120189', severity: 'critical', type: 'devices' }, { id: 'CVE-2012-1823', severity: 'critical', known_exploited: false, score_changes: ['CVSS 3.1 from CISA: 5.3 → 9.8 on 2026-10-20'] }, { id: 'CVE-2026-56164', product: 'Microsoft SharePoint Enterprise Server 2016', products_total: 3 }] },
           // SharePoint's record names three products, and its path only the first: each has a row, with its bounds.
-          cve_products: { rows: 8, contains: [
+          // The PHP CVE's record names no product, so its rows are NVD's CPE products.
+          cve_products: { rows: 37, contains: [
             { id: 'CVE-2026-56164', product: 'Microsoft SharePoint Server 2019', range: '>= 16.0.0, < 16.0.10417.20175', version_from: '16.0.0', version_below: '16.0.10417.20175', first_unaffected: '16.0.10417.20175' },
             { id: 'CVE-2026-59822', product: 'litellm', range: '< 1.84.0', version_below: '1.84.0' },
             { id: 'CVE-2026-120189', product: 'DIR-505', range: '1.10B02', version_exact: '1.10B02' },
@@ -260,20 +310,20 @@ const suite = {
           cve_known_exploited: { rows: 3, contains: [{ id: 'CVE-2026-59822' }, { id: 'CVE-2026-56164' }, { id: 'CVE-2021-44228' }] },
           cve_packages: { rows: 1, contains: [{ purl: 'pkg:cpan/XS-libbrotli' }] },
           cve_weaknesses: { rows: CWE_ENTRIES, contains: [{ id: 'CWE-400', abstraction: 'class', cves: 1 }, { id: 'CWE-306', cves: 2 }, { id: 'CWE-1333', abstraction: 'base', cves: 0 }] },
-          'cve_recent(100000)': { rows: 6 },
+          'cve_recent(100000)': { rows: 7 },
         },
       },
     },
     {
       name: 'two hours later, nothing new: only the window since the watermark and the day of EPSS are asked, and every file is left alone',
       clock: '2026-11-05T08:00:00Z', pass: 'incremental',
-      interactions: [...changedSince(WATERMARK, '2026-11-05T08:00:00Z', []), epssDay],
+      interactions: [...history(HISTORY_MARK, '2026-11-05T08:00:00Z'), ...changedSince(WATERMARK, '2026-11-05T08:00:00Z', []), epssDay],
       expect: { written: 0, changed: 0, removed: 0 },
     },
     {
       name: 'the numbering authority scores the Perl package at 8.8: its file moves from unscored to high, and nothing else changes',
       clock: '2026-11-05T10:00:00Z', pass: 'incremental',
-      interactions: [...changedSince(WATERMARK, '2026-11-05T10:00:00Z', [BROTLI_SCORED]), epssDay],
+      interactions: [...history(HISTORY_MARK, '2026-11-05T10:00:00Z'), ...changedSince(WATERMARK, '2026-11-05T10:00:00Z', [BROTLI_SCORED]), epssDay],
       expect: {
         rows: { 'state/watermark': { value: { modified: '2026-11-05T09:12:44.103Z' } } },
         paths: { [BROTLI_UNSCORED]: { absent: true }, [BROTLI_HIGH]: { contains: ['"severity":"high"', '"cvss_score":8.8', '"type":"libraries"', '"kind":"vulnerability.high.libraries"'] } },
@@ -282,7 +332,7 @@ const suite = {
     {
       name: 'the plugin\'s CVE is rejected: its file moves to rejected/, and it loses its reading',
       clock: '2026-11-05T12:00:00Z', pass: 'incremental',
-      interactions: [...changedSince('2026-11-05T09:12:44.103Z', '2026-11-05T12:00:00Z', [PLUGIN_REJECTED]), epssDay],
+      interactions: [...history(HISTORY_MARK, '2026-11-05T12:00:00Z'), ...changedSince('2026-11-05T09:12:44.103Z', '2026-11-05T12:00:00Z', [PLUGIN_REJECTED]), epssDay],
       expect: {
         rows: { 'labels/CVE-2026-113482': { absent: true } },
         paths: { [PLUGIN_PATH]: { absent: true }, 'rejected/CVE-2026-113482.rqlobject': { contains: ['cve.rejected', 'rejected by its numbering authority'] } },
@@ -292,13 +342,13 @@ const suite = {
       name: 'NVD fails with 503: the pass fails, and nothing is removed',
       clock: '2026-11-05T14:00:00Z', pass: 'incremental',
       interactions: [{ method: 'GET', status: 503, headers: { 'content-type': 'text/html' }, text: '<html><body>Service Unavailable</body></html>',
-        url: changedSince('2026-11-05T11:40:02.517Z', '2026-11-05T14:00:00Z', [])[0].url }],
-      expect: { failed: true, collections: { cves: 6 } },
+        url: history(HISTORY_MARK, '2026-11-05T14:00:00Z')[0].url }],
+      expect: { failed: true, collections: { cves: 7 } },
     },
     {
       name: 'a CVE arrives that the model cannot read yet: it is filed as unclassified, and says so',
       clock: '2026-11-05T16:00:00Z', pass: 'incremental',
-      interactions: [...changedSince('2026-11-05T11:40:02.517Z', '2026-11-05T16:00:00Z', [LOGURU_LATE]), epssDay],
+      interactions: [...history(HISTORY_MARK, '2026-11-05T16:00:00Z'), ...changedSince('2026-11-05T11:40:02.517Z', '2026-11-05T16:00:00Z', [LOGURU_LATE]), epssDay],
       expect: {
         paths: { [LOGURU_PATH]: { contains: ['"type":"unclassified"', '"type_rule":"none"', 'cve.unread', '"kind":"vulnerability.low.unclassified"', 'weaknesses/CWE-1333.rqlobject', 'weaknesses CWE-1333 Inefficient Regular Expression Complexity; CWE-400 Uncontrolled Resource Consumption'] } },
         views: { cve_weaknesses: { contains: [{ id: 'CWE-1333', cves: 1 }, { id: 'CWE-400', cves: 2 }] } },
@@ -307,7 +357,7 @@ const suite = {
     {
       name: 'a CVE arrives whose numbering authority writes its versions across two lines: its product, headline and structure each hold them on one',
       clock: '2026-11-05T17:00:00Z', pass: 'incremental',
-      interactions: [...changedSince('2026-11-05T15:02:10.880Z', '2026-11-05T17:00:00Z', [TEAMCITY_LATE]), epssDay],
+      interactions: [...history(HISTORY_MARK, '2026-11-05T17:00:00Z'), ...changedSince('2026-11-05T15:02:10.880Z', '2026-11-05T17:00:00Z', [TEAMCITY_LATE]), epssDay],
       expect: {
         paths: { [TEAMCITY_PATH]: { contains: ['"type":"devtools"', '"versions":["< 2026.2, 2026.1.4, 2025.11.8"]', 'JetBrains TeamCity — < 2026.2, 2026.1.4, 2025.11.8'] } },
       },
@@ -315,7 +365,7 @@ const suite = {
     {
       name: 'a CVE arrives that names 27 products, more than a file keeps: its file says so, and its 23rd product is found by name though the path names only the first',
       clock: '2026-11-05T17:10:00Z', pass: 'incremental',
-      interactions: [...changedSince('2026-11-05T16:30:00.000Z', '2026-11-05T17:10:00Z', [OFFICE_LATE]), epssDay],
+      interactions: [...history(HISTORY_MARK, '2026-11-05T17:10:00Z'), ...changedSince('2026-11-05T16:30:00.000Z', '2026-11-05T17:10:00Z', [OFFICE_LATE]), epssDay],
       expect: {
         paths: { [OFFICE_PATH]: { contains: ['"product":"Microsoft 365 Apps for Enterprise"', '"products_total":27', 'cve.products-cut', 'The record names 27 affected products, and this file keeps the first 25.',
           // Microsoft writes an address where the first product's range ends, which is no version.
@@ -334,7 +384,7 @@ const suite = {
     {
       name: 'a CVE arrives whose record names 39 products and says only 7 are affected: the 20 it says are unaffected and the 12 unknown are no product of it',
       clock: '2026-11-05T17:20:00Z', pass: 'incremental',
-      interactions: [...changedSince('2026-11-05T17:05:00.000Z', '2026-11-05T17:20:00Z', [JSON_GLIB_LATE]), epssDay],
+      interactions: [...history(HISTORY_MARK, '2026-11-05T17:20:00Z'), ...changedSince('2026-11-05T17:05:00.000Z', '2026-11-05T17:20:00Z', [JSON_GLIB_LATE]), epssDay],
       expect: {
         paths: { [JSON_GLIB_PATH]: { contains: ['"products_total":7', 'Red Hat Red Hat Enterprise Linux 10 — every version', '7 affected products, in product-1 to product-7', '"key":"product-7"'] } },
         views: { cve_products: { contains: [{ id: 'CVE-2026-120194', product: 'Red Hat OpenShift Container Platform 5', package: 'openshift/ose-rhel-coreos-9', range: 'every version' }] } },
@@ -358,17 +408,40 @@ const suite = {
       expect: { views: { "cve_advisories('Debian:12', 'linux', '6.1.1-1')": { rows: 6, contains: [{ advisory: PAGED.second.vulns[0].id }, { advisory: PAGED.first.vulns[0].id }] } } },
     },
     {
+      name: 'NVD adds its own score to the old PHP CVE: the change history names it, its modified listing returns it, and its file names both changes',
+      clock: '2026-11-05T18:00:00Z', pass: 'incremental',
+      interactions: [...history(HISTORY_MARK, '2026-11-05T18:00:00Z', [NVD_RESCORE]), ...changedSince('2026-11-05T17:15:00.000Z', '2026-11-05T18:00:00Z', [OLD_PHP_NVD]), epssDay],
+      expect: {
+        rows: { 'state/history': { value: { changed: '2026-11-05T17:21:00.000Z' } } },
+        paths: { [OLD_PHP_PATH]: { contains: ['"rescored":"2026-11-05T17:21:00.000Z"', '"score_changes":["CVSS 3.1 from CISA: 5.3 → 9.8 on 2026-10-20","CVSS 3.1 from NVD: scored 9.8 on 2026-11-05"]',
+          'rescored CVSS 3.1 from NVD: scored 9.8 on 2026-11-05, after 1 earlier change', 'CVSS 3.1 9.8 from NVD'] } },
+      },
+    },
+    {
+      name: 'a week later, a full pass: the change history still names the PHP CVE inside the window, so it stays, kept without asking NVD for it again',
+      clock: '2026-11-12T06:00:00Z', pass: 'full',
+      // No interaction answers the PHP CVE by its id: a request for it would fail the generation.
+      interactions: [...firstRead('2026-11-12T06:00:00Z', [BROTLI_SCORED, DLINK, PLUGIN_REJECTED, LITELLM, SHAREPOINT, LOG4J, LOGURU_LATE, TEAMCITY_LATE, OFFICE_LATE, JSON_GLIB_LATE]),
+        ...history('2026-10-13T06:00:00.000Z', '2026-11-12T06:00:00Z', [CISA_RESCORE, NVD_RESCORE]), ...cweRead, ...cweCited, epssPages],
+      expect: {
+        collections: { rescored: 1 },
+        paths: { [OLD_PHP_PATH]: { contains: ['"rescored":"2026-11-05T17:21:00.000Z"', 'CVSS 3.1 from CISA: 5.3 → 9.8 on 2026-10-20', 'CVSS 3.1 from NVD: scored 9.8 on 2026-11-05'] } },
+      },
+    },
+    {
       name: 'a year later, a full pass lists nothing published in the window: every CVE leaves, with its score, reading, place and file, but the known exploited, which stay whatever their age',
       clock: '2027-11-12T06:00:00Z', pass: 'full',
       // The Office and json-glib CVEs are still held when the CWE list is read, so the weaknesses they name are read alone.
-      interactions: [...firstRead('2027-11-12T06:00:00Z', [LITELLM, SHAREPOINT, LOG4J]), ...cweRead, ...cweCited, epssPages],
+      interactions: [...firstRead('2027-11-12T06:00:00Z', [LITELLM, SHAREPOINT, LOG4J]), ...history('2027-10-13T06:00:00.000Z', '2027-11-12T06:00:00Z'), ...cweRead, ...cweCited, epssPages],
       expect: {
-        collections: { cves: 3, epss: 3, labels: 3, placed: 3, weaknesses: CWE_ENTRIES + cweCited.length },
+        collections: { cves: 3, epss: 3, labels: 3, placed: 3, rescored: 0, weaknesses: CWE_ENTRIES + cweCited.length },
         paths: {
           [BROTLI_HIGH]: { absent: true }, [LOGURU_PATH]: { absent: true }, [TEAMCITY_PATH]: { absent: true }, [OFFICE_PATH]: { absent: true }, [JSON_GLIB_PATH]: { absent: true },
           'rejected/CVE-2026-80726.rqlobject': { absent: true }, 'rejected/CVE-2026-113482.rqlobject': { absent: true },
           [LITELLM_PATH]: { contains: ['"known_exploited":true'] }, [LOG4J_PATH]: { contains: ['"known_exploited":true'] },
-          'overview.md': { contains: ['the CVEs published in the last 30 days, and every CVE CISA lists as known exploited, whatever its age: 3 CVEs'] },
+          // Its rescoring left the window, and it is not known exploited: it leaves, with its changes.
+          [OLD_PHP_PATH]: { absent: true },
+          'overview.md': { contains: ['the CVEs published in the last 30 days, every CVE whose CVSS score NVD changed in them, and every CVE CISA lists as known exploited, whatever its age: 3 CVEs'] },
         },
       },
     },

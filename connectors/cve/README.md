@@ -1,12 +1,12 @@
 # CVE connector
 
-Copies the CVEs published in the last 30 days, and every CVE known to be exploited, into RepoQL, beside the code they might affect. The CVEs come from NIST's National Vulnerability Database (NVD), and their exploit likelihood from FIRST's EPSS. Rules read what type of software each CVE concerns, asking a model only about the CVEs they do not recognise, and each CVE is filed by the month it was published, its severity, and that type. It is the starting point for CVE scanning with RepoQL: copy it, and change what your readers need.
+Copies the CVEs published in the last 30 days, every older CVE whose CVSS score NVD's change history shows was changed in them, and every CVE known to be exploited, into RepoQL, beside the code they might affect. The CVEs come from NIST's National Vulnerability Database (NVD), and their exploit likelihood from FIRST's EPSS. Rules read what type of software each CVE concerns, asking a model only about the CVEs they do not recognise, and each CVE is filed by the month it was published, its severity, and that type. It is the starting point for CVE scanning with RepoQL: copy it, and change what your readers need.
 
 ## Two imports
 
 | Import | What it holds | How big |
 |--------|---------------|---------|
-| `cve://recent` | Every CVE published in the window, exploited or not, and every CVE CISA lists as known exploited, whatever its age | About 17,000 CVEs for the default 30 days, and 210,000 for a year |
+| `cve://recent` | Every CVE published in the window, exploited or not, every CVE whose CVSS score was added, changed or removed in the window, whatever its age, and every CVE CISA lists as known exploited, whatever its age | About 17,000 CVEs for the default 30 days, about 600 of them older CVEs rescored in it, and 210,000 for a year |
 | `cve://kev` | Only the CVEs CISA lists as known exploited, whatever their age | About 1,800 CVEs |
 
 Known exploited means CISA has evidence of exploitation in the wild, and that evidence can lag publication by days or weeks. Log4Shell, CVE-2021-44228, was listed on the day it was published. PHP's CVE-2026-109618 was published on 21 October 2026, and CISA listed it on 26 October, so for five days only `cve://recent` held it. Import `cve://kev` only if you act on confirmed exploitation alone. EPSS, in `scores/epss.csv`, estimates how likely a CVE is to be exploited before anyone has seen it happen.
@@ -44,7 +44,8 @@ Two jobs, both run by an agent over an uplink that holds the organization's code
 ## What it reads, and what it sends
 
 - **What it reads.**
-  - NVD's CVE API, without a key: the CVEs published in the window and the known exploited, then every two hours those NVD modified since. It reads at most 9 requests a minute, under NVD's anonymous limit of 5 in 30 seconds. On 2026-11-05 the 30-day window held 17,425 CVEs, so a first read is about 90 pages, which takes about ten minutes. A year is about 1,050 pages, about two hours. `cve://kev` is about 9 pages.
+  - NVD's CVE API, without a key: the CVEs published in the window and the known exploited, then every two hours those NVD modified since. Any older CVE the change history names as rescored that no listing returned is read by its id, one request each: about 600 on a first read, and after that almost none, because an incremental pass finds each in the modified listing.
+  - NVD's change history, without a key, in `cve://recent`: the CVSS scores added, changed or removed in the window, 2,000 changes to a page. On 2026-11-16 the 30 days held 91,751 changes, so a full pass reads about 46 pages, and an incremental pass usually one. 629 of the CVEs it names as rescored were published before the window. It reads at most 9 requests a minute, under NVD's anonymous limit of 5 in 30 seconds. On 2026-11-05 the 30-day window held 17,425 CVEs, so a first read is about 90 pages, which takes about ten minutes. A year is about 1,050 pages, about two hours. `cve://kev` is about 9 pages.
   - EPSS's API: 10,000 scores to a page, once a day, when EPSS publishes the day's scores.
   - OSV's batch query, only when a query calls `cve_affects`. It sends the ecosystem, package names and versions the query passes it.
   - MITRE's CWE API, on a full pass and on the first pass: every weakness and category of the CWE list, in about 22 requests.

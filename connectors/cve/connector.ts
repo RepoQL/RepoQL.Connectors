@@ -4,7 +4,8 @@
 //
 // An import is one of two scopes:
 //
-//   cve://recent  every CVE published in the window, and every CVE CISA lists as known exploited, whatever its age
+//   cve://recent  every CVE published in the window, every CVE whose CVSS score NVD's change history shows was added,
+//                 changed or removed in the window whatever its age, and every CVE CISA lists as known exploited
 //   cve://kev     only the CVEs CISA lists as known exploited, whatever their age: under two thousand, read in minutes
 //
 //   fetch     copies each CVE of the import's scope from NVD, 200 to a page, and the day's EPSS scores of those CVEs
@@ -14,7 +15,9 @@
 //
 // The sources, which it only reads, with no credential:
 //
-//   GET  https://services.nvd.nist.gov/rest/json/cves/2.0   CVEs, by the window they were published or last modified in
+//   GET  https://services.nvd.nist.gov/rest/json/cves/2.0   CVEs, by the window they were published or last modified in,
+//                                                           or one by its id
+//   GET  https://services.nvd.nist.gov/rest/json/cvehistory/2.0   in cve://recent, the CVSS changes NVD recorded in the window
 //   GET  https://api.first.org/data/v1/epss                 the day's exploit likelihood of every CVE, 10,000 to a page
 //   POST https://api.osv.dev/v1/querybatch                  the advisories that name a package version: cve_affects only
 //   GET  https://cwe-api.mitre.org/api/v1/cwe               MITRE's CWE list, on a full pass: about 22 requests a week
@@ -25,7 +28,9 @@
 //   epss/<CVE id>      fetch's: the CVE's EPSS score on the day EPSS last published
 //   weaknesses/CWE-<n> fetch's: one CWE weakness or category, cut to what render shows
 //   state/cwe          fetch's: the CWE version held
+//   rescored/<CVE id>  fetch's: each CVSS score NVD's change history says was added, changed or removed in the window
 //   state/watermark    fetch's: the newest lastModified NVD has answered, where the next incremental pass starts
+//   state/history      fetch's: the newest change NVD's change history has answered, where the next pass reads it from
 //   state/epss         fetch's: the day of the EPSS scores held
 //   state/listing      fetch's: present once a full pass has read the whole scope
 //   listed (a table)   fetch's: the CVEs the current full pass has listed, so only their scores are kept
@@ -65,6 +70,10 @@ const WINDOW_DAYS = 30;
 const TYPES_WRITTEN: ReadonlySet<string> | undefined = undefined;
 
 const NVD = 'https://services.nvd.nist.gov/rest/json/cves/2.0';
+const NVD_HISTORY = 'https://services.nvd.nist.gov/rest/json/cvehistory/2.0';
+// NVD's change history answers at most 5,000 changes to a page. A change averages about 1 KB, so 2,000 keeps a page
+// under the 4 MiB a JSON response may hold. A month of changes is about 92,000, so 46 pages.
+const HISTORY_PAGE = 2000;
 const EPSS = 'https://api.first.org/data/v1/epss';
 const CWE_API = 'https://cwe-api.mitre.org/api/v1/cwe';
 // MITRE's CWE API answers one unknown id in a list with 404, and about 12 KB a weakness, so 100 to a request.
@@ -288,6 +297,15 @@ interface Kev { added: string; due?: string; action?: string; name?: string }
 
 interface Epss { epss: number; percentile: number; date: string }
 
+// The CVSS scores NVD's change history says were added, changed or removed after a CVE was published, in the window,
+// oldest first, and the instant of the newest. A score a CVE arrives with is no change, and is not here.
+interface Rescored { latest: string; changes: ScoreChange[] }
+
+// One score's change: when NVD recorded it, its change's id, who scored, the CVSS version, and the vector before and
+// after, without the version prefix. `from` alone is a score removed, `to` alone one added. `by` is NVD's source
+// identifier of whoever made the change, which render names as the CVE's own numbering authority, CISA or NVD.
+interface ScoreChange { at: string; change: string; by: string; version: string; from?: string; to?: string }
+
 // The model's reading of one CVE.
 // How a CVE was read. The rules decide its attack vector and whether it executes code; they decide its type when they
 // recognise it, and the model when they do not, in which case model and type_confidence say so.
@@ -297,17 +315,22 @@ interface Label { type: string; rule: string; attack_vector?: string; code_execu
 interface Placed { path: string; from?: string }
 
 // The cursor of a pass: which step, the window it reads, and where in it.
-// Which CVEs an import holds: those published in the window and every known exploited one, or only the known exploited.
+// Which CVEs an import holds: those published in the window, those rescored in it, and every known exploited one, or only
+// the known exploited.
 type Scope = 'recent' | 'exploited';
 interface Target { scope: Scope }
 
-// Where a pass is. A full pass of cve://recent lists the published windows, then the known exploited, then EPSS; a full pass of
-// cve://kev lists the known exploited, then EPSS. Any other pass lists the modified windows, then EPSS.
+// Where a pass is. A full pass of cve://recent lists the published windows, then the known exploited, then the change
+// history of the window, then any rescored CVE those did not list, then EPSS. Any other pass of cve://recent reads the
+// change history since it last did, then lists the modified windows, then any rescored CVE it does not hold, then EPSS.
+// A full pass of cve://kev lists the known exploited, then EPSS, and any other the modified windows, then EPSS.
 // A full pass, and the first pass that holds no CWE list, then reads MITRE's CWE list before EPSS, in phases: the
 // version, every category, the pillars of the Research Concepts view, each pillar's descendants, the weaknesses in
 // batches, and one at a time any weakness a CVE names that the view does not hold.
 interface Cursor {
-  step: 'published' | 'exploited' | 'modified' | 'cwe' | 'epss'; now: string; from?: string; to?: string; at: number; date?: string;
+  step: 'published' | 'exploited' | 'history' | 'modified' | 'rescored' | 'cwe' | 'epss'; now: string; from?: string; to?: string; at: number; date?: string;
+  // The history step's next listing: the modified windows from the watermark, or, when the pass listed the scope, none.
+  then?: 'modified' | 'rescored'; after?: string;
   phase?: 'version' | 'categories' | 'pillars' | 'tree' | 'weaknesses' | 'cited'; version?: string; pillars?: number[]; ids?: number[]; cited?: number[];
 }
 
@@ -378,16 +401,19 @@ export default class Cves extends Connector {
 
   // ---- fetch --------------------------------------------------------------------------------------------------------
 
-  // A full pass lists every CVE of the scope: those published in the window, in windows of at most 120 days, and those
-  // known exploited. It then reads the day's EPSS scores, and removes what it did not list. Any other pass lists what NVD
-  // modified since the watermark, keeping the CVEs of the scope, then reads EPSS when it has published a newer day. The
-  // cursor carries the instant the pass began, so every call of a pass reads the same windows.
+  // A full pass lists every CVE of the scope: those published in the window, in windows of at most 120 days, those
+  // known exploited, and in cve://recent those NVD's change history shows were rescored in the window. It then reads the
+  // day's EPSS scores, and removes what it did not list. Any other pass reads the change history since it last did,
+  // lists what NVD modified since the watermark, keeping the CVEs of the scope, then reads EPSS when it has published a
+  // newer day. The cursor carries the instant the pass began, so every call of a pass reads the same windows.
   async fetch(cursor?: string): Promise<FetchResult> {
     const full = this.pass?.full === true;
     const at: Cursor = cursor ? JSON.parse(cursor) as Cursor : this.firstStep(full);
     try {
       if (at.step === 'epss') return this.epssPage(at, full);
       if (at.step === 'cwe') return this.cwePage(at);
+      if (at.step === 'history') return this.historyPage(at, full);
+      if (at.step === 'rescored') return this.rescoredPage(at, full);
       return this.cvePage(at, full);
     } catch (error) {
       if (error instanceof RateLimited) return { cursor: JSON.stringify(at), wait: error.retryAfterSeconds };
@@ -404,7 +430,17 @@ export default class Cves extends Connector {
     if ((full || watermark === undefined) && this.scope() === 'exploited') return { step: 'exploited', now, at: 0 };
     if (full || watermark === undefined)
       return { step: 'published', now, ...windowFrom(isoMinusDays(now, this.windowDays()), now), at: 0 };
-    return { step: 'modified', now, ...windowFrom(watermark, now), at: 0 };
+    if (this.scope() === 'exploited') return { step: 'modified', now, ...windowFrom(watermark, now), at: 0 };
+    return this.historyStep(now, false, 'modified');
+  }
+
+  // The change history's first window: the whole window when the pass lists the scope or no pass has read it, and
+  // otherwise from the newest change it answered. The window never starts before the import's window does.
+  private historyStep(now: string, whole: boolean, then: 'modified' | 'rescored'): Cursor {
+    const oldest = isoMinusDays(now, this.windowDays());
+    const since = whole ? undefined : this.db.get<{ changed: string }>('state', 'history')?.changed;
+    const from = since !== undefined && compareInstants(since, oldest) > 0 ? since : oldest;
+    return { step: 'history', now, then, ...windowFrom(from, now), at: 0 };
   }
 
   // One page of NVD's listing for the cursor's step, then the next page, the next window, the next step, or EPSS.
@@ -414,12 +450,13 @@ export default class Cves extends Connector {
     const oldest = exploitedOnly ? undefined : isoMinusDays(at.now, this.windowDays());
     let newest = this.db.get<{ modified: string }>('state', 'watermark')?.modified;
     const listed: string[] = [];
-    for (const item of page.vulnerabilities) {
-      const cve = readCve(item);
+    const cves = page.vulnerabilities.map(readCve);
+    const rescored = oldest === undefined ? new Set<string>() : this.rescoredSince(cves.map(cve => cve.id), oldest);
+    for (const cve of cves) {
       if (newest === undefined || compareInstants(cve.modified, newest) > 0) newest = cve.modified;
-      // A modified CVE outside the scope is not this import's: one published before the window and not known exploited,
-      // or, in cve://kev, one not known exploited.
-      if (cve.kev === undefined && (oldest === undefined || compareInstants(cve.published, oldest) < 0)) continue;
+      // A modified CVE outside the scope is not this import's: one published before the window, not known exploited,
+      // and not rescored in it, or, in cve://kev, one not known exploited.
+      if (cve.kev === undefined && (oldest === undefined || compareInstants(cve.published, oldest) < 0) && !rescored.has(cve.id)) continue;
       this.db.put<Cve>('cves', cve.id, fit(cve), { time: cve.modified });
       listed.push(cve.id);
     }
@@ -438,12 +475,111 @@ export default class Cves extends Connector {
       return { cursor: JSON.stringify({ ...at, ...windowFrom(at.to as string, at.now), at: 0 }) };
     // A known exploited CVE may be years old, so a full pass of cve://recent lists them apart from the window.
     if (at.step === 'published') return { cursor: JSON.stringify({ step: 'exploited', now: at.now, at: 0 } satisfies Cursor) };
+    // A CVE rescored in the window may be years old too, so cve://recent then reads what the change history names.
+    if (!exploitedOnly && at.step === 'exploited') return { cursor: JSON.stringify(this.historyStep(at.now, true, 'rescored')) };
+    if (!exploitedOnly && at.step === 'modified') return { cursor: JSON.stringify({ step: 'rescored', now: at.now, at: 0 } satisfies Cursor) };
+    return this.listingDone(full, at.now);
+  }
+
+  // Every CVE of the scope has been listed: the CWE list next, when it is due, then EPSS.
+  private listingDone(full: boolean, now: string): FetchResult {
     // Every CVE of the scope has now been listed in this shape, or only modified ones were, because all were already.
     this.db.put('state', 'cve', { shape: CVE_SHAPE });
     // The CWE list changes a few times a year, so a full pass reads it, and so does any pass whose rows are of an older
     // shape, or that holds none.
-    if (full || this.db.get<{ shape?: number }>('state', 'cwe')?.shape !== CWE_SHAPE) return { cursor: JSON.stringify({ step: 'cwe', phase: 'version', now: at.now, at: 0 } satisfies Cursor) };
-    return { cursor: JSON.stringify({ step: 'epss', now: at.now, at: 0 } satisfies Cursor) };
+    if (full || this.db.get<{ shape?: number }>('state', 'cwe')?.shape !== CWE_SHAPE) return { cursor: JSON.stringify({ step: 'cwe', phase: 'version', now, at: 0 } satisfies Cursor) };
+    return { cursor: JSON.stringify({ step: 'epss', now, at: 0 } satisfies Cursor) };
+  }
+
+  // Which of `ids` NVD's change history shows were rescored at or after `oldest`, read by a query so none counts as seen.
+  private rescoredSince(ids: string[], oldest: string): Set<string> {
+    if (ids.length === 0) return new Set();
+    const rows = this.db.query(
+      `SELECT key FROM kv WHERE collection = 'rescored' AND key IN (SELECT unnest($1::JSON::VARCHAR[])) AND (value->>'latest') >= $2`, [ids, oldest]);
+    return new Set(rows.map(row => String(row.key)));
+  }
+
+  // One page of NVD's change history for the cursor's window: each CVSS score added, changed or removed after a CVE was
+  // published is kept with the CVE's other changes in the window. Then the next page, the next window, or the next step.
+  private historyPage(at: Cursor, full: boolean): FetchResult {
+    const url = `${NVD_HISTORY}?changeStartDate=${encodeURIComponent(at.from as string)}&changeEndDate=${encodeURIComponent(at.to as string)}&resultsPerPage=${HISTORY_PAGE}&startIndex=${at.at}`;
+    const response = this.http.request({ url });
+    if (response.status < 200 || response.status > 299)
+      throw new Error(`NVD answered its change history ${url} with HTTP ${response.status}. A pass resumes from this page.`);
+    const body = response.body as { totalResults?: unknown; cveChanges?: unknown; timestamp?: unknown } | undefined;
+    if (!body || typeof body.totalResults !== 'number' || !Array.isArray(body.cveChanges))
+      throw new Error(`NVD answered its change history ${url} with something other than a page of changes.`);
+    const entries = body.cveChanges as { change?: Record<string, any> }[];
+    const oldest = isoMinusDays(at.now, this.windowDays());
+    const found = new Map<string, ScoreChange[]>();
+    let newest = this.db.get<{ changed: string }>('state', 'history')?.changed;
+    for (const entry of entries) {
+      const change = entry.change;
+      if (!change || typeof change.cveId !== 'string' || typeof change.created !== 'string') continue;
+      const when = utc(change.created);
+      if (newest === undefined || compareInstants(when, newest) > 0) newest = when;
+      // The scores a CVE arrives with are its first, not a change to it.
+      if (change.eventName === 'New CVE Received') continue;
+      const scores = scoreChanges(change, when);
+      if (scores.length > 0) found.set(change.cveId, [...(found.get(change.cveId) ?? []), ...scores]);
+    }
+    const held = this.db.getMany<Rescored>('rescored', [...found.keys()]);
+    for (const [id, scores] of found) {
+      const byChange = new Map<string, ScoreChange>();
+      for (const score of [...(held[id]?.changes ?? []), ...scores]) byChange.set(`${score.change} ${score.version} ${score.from ?? ''} ${score.to ?? ''}`, score);
+      const changes = [...byChange.values()].filter(score => compareInstants(score.at, oldest) >= 0).sort((a, b) => compareInstants(a.at, b.at));
+      if (changes.length === 0) { this.db.remove('rescored', id); continue; }
+      const latest = changes[changes.length - 1].at;
+      this.db.put<Rescored>('rescored', id, { latest, changes }, { time: latest });
+    }
+    // The watermark is NVD's own time, the newest change it answered, or, before any, the instant of its answer.
+    if (newest === undefined && typeof body.timestamp === 'string') newest = utc(body.timestamp);
+    if (newest !== undefined) this.db.put('state', 'history', { changed: newest });
+
+    if (at.at + entries.length < body.totalResults && entries.length > 0)
+      return { cursor: JSON.stringify({ ...at, at: at.at + entries.length }) };
+    if (compareInstants(at.to as string, at.now) < 0)
+      return { cursor: JSON.stringify({ ...at, ...windowFrom(at.to as string, at.now), at: 0 }) };
+    // A full pass read the whole window, so it put every rescored row it keeps again, and the rest leave with removeUnseen.
+    if (at.then === 'modified') {
+      const watermark = this.db.get<{ modified: string }>('state', 'watermark')?.modified as string;
+      return { cursor: JSON.stringify({ step: 'modified', now: at.now, ...windowFrom(watermark, at.now), at: 0 } satisfies Cursor) };
+    }
+    return { cursor: JSON.stringify({ step: 'rescored', now: at.now, at: 0 } satisfies Cursor) };
+  }
+
+  // The CVEs rescored in the window that no listing of this pass returned, one a call. A full pass keeps each one it
+  // already holds, which an incremental pass read when NVD modified it, and reads the rest from NVD by id; any other pass
+  // reads only those it does not hold, as after an upgrade, when the change history is first read.
+  private rescoredPage(at: Cursor, full: boolean): FetchResult {
+    const oldest = isoMinusDays(at.now, this.windowDays());
+    const missing = (sql: string, args: Json[]) => this.db.query(sql, args).map(row => String(row.key));
+    if (full && at.after === undefined) {
+      this.db.query('CREATE TABLE IF NOT EXISTS listed (key VARCHAR PRIMARY KEY, pass VARCHAR NOT NULL)');
+      // Held, and not listed by this pass: kept as seen, with no request.
+      for (let after = ''; ;) {
+        const keys = missing(
+          `SELECT r.key FROM kv r JOIN kv c ON c.collection = 'cves' AND c.key = r.key
+           WHERE r.collection = 'rescored' AND (r.value->>'latest') >= $1 AND r.key > $2
+             AND r.key NOT IN (SELECT key FROM listed WHERE pass = $3) ORDER BY r.key LIMIT 1000`, [oldest, after, at.now]);
+        if (keys.length === 0) break;
+        this.db.touch('cves', keys);
+        this.db.query('INSERT OR REPLACE INTO listed SELECT unnest($1::JSON::VARCHAR[]), $2', [keys, at.now]);
+        after = keys[keys.length - 1];
+      }
+    }
+    const [next] = missing(
+      `SELECT r.key FROM kv r WHERE r.collection = 'rescored' AND (r.value->>'latest') >= $1 AND r.key > $2
+         AND NOT EXISTS (SELECT 1 FROM kv c WHERE c.collection = 'cves' AND c.key = r.key) ORDER BY r.key LIMIT 1`, [oldest, at.after ?? '']);
+    if (next === undefined) return this.listingDone(full, at.now);
+    const page = this.nvdPage(`${NVD}?cveId=${encodeURIComponent(next)}`);
+    for (const item of page.vulnerabilities) {
+      const cve = readCve(item);
+      if (cve.id !== next) continue;
+      this.db.put<Cve>('cves', cve.id, fit(cve), { time: cve.modified });
+      if (full) this.db.query('INSERT OR REPLACE INTO listed SELECT unnest($1::JSON::VARCHAR[]), $2', [[cve.id], at.now]);
+    }
+    return { cursor: JSON.stringify({ ...at, after: next }) };
   }
 
   // One request of MITRE's CWE list for the cursor's phase, then the next request, the next phase, or EPSS.
@@ -659,11 +795,13 @@ export default class Cves extends Connector {
     const types = this.typesWritten();
     const keys = new Set<string>();
     const removed: string[] = [];
-    for (const collection of ['cves', 'labels', 'placed']) {
+    for (const collection of ['cves', 'labels', 'placed', 'rescored']) {
       for (let after: string | undefined; ;) {
         const page = this.db.changes(collection, { since, until, after });
         for (const row of page.changed) keys.add(row.key);
         if (collection === 'cves') removed.push(...page.removed);
+        // A CVE whose rescored row left the window is written again without its changes.
+        if (collection === 'rescored') for (const key of page.removed) keys.add(key);
         if (!page.next) break;
         after = page.next;
       }
@@ -699,6 +837,7 @@ export default class Cves extends Connector {
       const cves = this.db.getMany<Cve>('cves', slice);
       const labels = this.db.getMany<Label>('labels', slice);
       const placed = this.db.getMany<Placed>('placed', slice);
+      const rescored = this.db.getMany<Rescored>('rescored', slice);
       const names = this.weaknessNames(Object.values(cves).flatMap(cve => cve.cwes));
       for (const key of slice) {
         const cve = cves[key];
@@ -711,7 +850,7 @@ export default class Cves extends Connector {
           this.files.remove(path);
           continue;
         }
-        try { this.files.write(path, cveObject(cve, label, names), { origin: originOf(cve.id), time: cve.modified }); }
+        try { this.files.write(path, cveObject(cve, label, names, rescored[key]), { origin: originOf(cve.id), time: cve.modified }); }
         catch (error) { this.files.fail(path, String(error)); }
       }
     }
@@ -723,7 +862,8 @@ export default class Cves extends Connector {
     const counts = this.counts();
     const windowDays = this.scope() === 'exploited' ? undefined : this.windowDays();
     const published = windowDays === undefined ? undefined : this.publishedByDay();
-    this.files.write('overview.md', overviewFile(counts, whole, windowDays, types, this.db.get<{ date: string }>('state', 'epss')?.date, published), {});
+    const olderRescored = windowDays === undefined || published === undefined ? undefined : this.olderRescored(isoMinusDays(published.asOf, windowDays));
+    this.files.write('overview.md', overviewFile(counts, whole, windowDays, types, this.db.get<{ date: string }>('state', 'epss')?.date, published, olderRescored), {});
     for (const type of [...TYPE_NAMES, UNREAD]) this.files.write(`types/${type}.md`, typeFile(type, counts), {});
 
     // A weakness file names its relatives, so when any entry of the CWE list changes, every file is written again: the
@@ -818,6 +958,14 @@ export default class Cves extends Connector {
        WHERE collection = 'cves' AND (value->>'published') >= $1 GROUP BY day`, [days[0]]);
     const byDay = new Map(rows.map(row => [String(row.day), Number(row.n)]));
     return { asOf, days: days.map(day => ({ day, cves: byDay.get(day) ?? 0 })) };
+  }
+
+  // How many CVEs published before `oldest` the import holds because NVD's change history shows them rescored since.
+  private olderRescored(oldest: string): number {
+    const [row] = this.db.query(
+      `SELECT count(*) AS n FROM kv c JOIN kv r ON r.collection = 'rescored' AND r.key = c.key
+       WHERE c.collection = 'cves' AND (c.value->>'published') < $1 AND (r.value->>'latest') >= $1`, [oldest]);
+    return Number(row?.n ?? 0);
   }
 
   // How many CVEs each month, severity and type holds, counted by one query over the CVEs and the model's readings.
@@ -1430,7 +1578,7 @@ function flawSentence(cve: Cve): string {
 // product, score and fix as a node, its references as references, and what the connector judged as annotations.
 // The structure is the text semantic search matches a CVE on, and its headline is not, so it leads with what the flaw
 // is, in the words of its description, then where it is, how bad, and which weaknesses it is an instance of, by name.
-function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string, string>) {
+function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string, string>, rescored?: Rescored) {
   const { severity, metric } = severityOf(cve);
   const first = leadProduct(cve);
   const purls = [...new Set(cve.products.map(entry => entry.purl).filter((purl): purl is string => purl !== undefined))].sort();
@@ -1443,6 +1591,9 @@ function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string
     products: [...new Set(cve.products.map(productName).filter((name): name is string => name !== undefined))],
     products_total: cve.products_total ?? cve.products.length,
   };
+  // Each CVSS score NVD's change history says was added, changed or removed in the window, in words, oldest first.
+  const changes = rescored?.changes.map(change => scoreChangeLine(change, cve)) ?? [];
+  if (rescored && changes.length > 0) Object.assign(properties, { rescored: rescored.latest, score_changes: changes });
   // The names the record states, never the path's placeholder for a name it does not.
   const stated = first?.vendor ?? (first?.collection ? /^https?:\/\/([^/]+)/.exec(first.collection)?.[1] : undefined);
   if (stated) properties.vendor = stated;
@@ -1499,6 +1650,9 @@ function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string
       { rule: 'cve.products-cut', details: { named: cve.products_total, kept: cve.products.length } });
   if (rejected)
     object = object.withAnnotation('info', 'Its numbering authority rejected it: it is not a vulnerability record, and no product is affected.', { rule: 'cve.rejected' });
+  if (changes.length > 0)
+    object = object.withAnnotation('info', `NVD's change history shows ${changes.length === 1 ? 'a CVSS change' : `${changes.length} CVSS changes`} after it was published: ${changes.join('; ')}.`,
+      { rule: 'cve.rescored', details: { changes: changes.length, latest: rescored?.latest as string } });
 
   const structure = rejected
     ? ['rejected by its numbering authority', `published ${cve.published.slice(0, 10)} · rejected ${cve.modified.slice(0, 10)}`]
@@ -1509,6 +1663,7 @@ function cveObject(cve: Cve, label: Label | undefined, weaknessNames: Map<string
       ...(cve.cwes.length > 0 ? [`weaknesses ${cve.cwes.map(cwe => weaknessNames.has(cwe) ? `${cwe} ${weaknessNames.get(cwe)}` : cwe).join('; ')}`] : []),
       ...(purls.length > 0 ? [`packages ${purls.join(', ')}`] : []),
       fixes.length > 0 ? `fix referenced, in fix-1${fixes.length > 1 ? ` to fix-${fixes.length}` : ''}` : 'no fix referenced',
+      ...(changes.length > 0 ? [`rescored ${changes[changes.length - 1]}${changes.length > 1 ? `, after ${changes.length - 1} earlier change${changes.length > 2 ? 's' : ''}` : ''}`] : []),
       `published ${cve.published.slice(0, 10)} · modified ${cve.modified.slice(0, 10)} · ${cve.status}`,
     ];
   return object.withStructure(structure.join('\n'));
@@ -1554,6 +1709,67 @@ function exploitWords(cve: Cve): string {
   return words.map(word => ` · ${word}`).join('');
 }
 
+// One score change in words, such as "CVSS 3.1 from NVD: 5.3 → 9.8 on 2026-11-15". The change history names whoever
+// changed a score by NVD's source identifier, and carries vectors alone: a 3.x score is worked out from its vector, and
+// a 4.0 score is the one the record now holds for that vector, or the vector itself where the record holds none.
+function scoreChangeLine(change: ScoreChange, cve: Cve): string {
+  const by = change.by === cve.assigner ? 'cna' : change.by === CISA_ADP ? 'cisa' : change.by === NVD_SOURCE ? 'nvd' : change.by;
+  const words = (vector: string) => {
+    const score = change.version.startsWith('3.') ? cvss3Score(change.version, vector)
+      : cve.metrics.find(metric => metric.version === change.version && bareVector(metric.vector) === vector)?.score;
+    return score === undefined ? `vector ${vector}` : score.toFixed(1);
+  };
+  const what = change.from !== undefined && change.to !== undefined ? `${words(change.from)} → ${words(change.to)}`
+    : change.to !== undefined ? `scored ${words(change.to)}` : `${words(change.from as string)} withdrawn`;
+  return `CVSS ${change.version} from ${scorerWords(by)}: ${what} on ${change.at.slice(0, 10)}`;
+}
+
+// A CVSS vector without its version prefix, as NVD's change history writes one. The history sometimes leads a vector
+// with its scorer's name, such as "Red Hat, Inc.: AV:N/...", which is dropped too.
+function bareVector(vector: string): string {
+  return vector.trim().replace(/^.*?:\s+(?=CVSS:|AV:)/, '').replace(/^CVSS:\d\.\d\//, '');
+}
+
+// The CVSS 3.x and 4.0 scores one entry of NVD's change history added, changed or removed. An entry that removes one
+// vector and adds another of the same version is one change from the first to the second.
+function scoreChanges(change: Record<string, any>, at: string): ScoreChange[] {
+  const out: ScoreChange[] = [];
+  const details = (Array.isArray(change.details) ? change.details : []) as { action?: string; type?: string; oldValue?: string; newValue?: string }[];
+  const by = typeof change.sourceIdentifier === 'string' ? change.sourceIdentifier : 'unknown';
+  const id = typeof change.cveChangeId === 'string' ? change.cveChangeId : at;
+  for (const version of ['3.0', '3.1', '4.0']) {
+    const mine = details.filter(detail => detail.type === `CVSS V${version}`);
+    const removed = mine.filter(detail => detail.action === 'Removed' && typeof detail.oldValue === 'string').map(detail => bareVector(detail.oldValue as string));
+    const added = mine.filter(detail => detail.action === 'Added' && typeof detail.newValue === 'string').map(detail => bareVector(detail.newValue as string));
+    for (const detail of mine.filter(detail => detail.action === 'Changed' && typeof detail.oldValue === 'string' && typeof detail.newValue === 'string'))
+      out.push({ at, change: id, by, version, from: bareVector(detail.oldValue as string), to: bareVector(detail.newValue as string) });
+    for (let index = 0; index < Math.max(removed.length, added.length); index++)
+      out.push(stripped({ at, change: id, by, version, from: removed[index], to: added[index] }) as unknown as ScoreChange);
+  }
+  return out;
+}
+
+// The base score of a CVSS 3.0 or 3.1 vector, as FIRST's specification computes it, or undefined for a vector that is
+// not one. NVD's change history carries vectors without their scores.
+function cvss3Score(version: string, vector: string): number | undefined {
+  const parts = new Map(vector.replace(/^CVSS:3\.[01]\//, '').split('/').map(part => part.split(':') as [string, string]));
+  const weight = (metric: string, table: Record<string, number>) => table[parts.get(metric) ?? ''];
+  const changed = parts.get('S') === 'C';
+  if (!changed && parts.get('S') !== 'U') return undefined;
+  const av = weight('AV', { N: 0.85, A: 0.62, L: 0.55, P: 0.2 }), ac = weight('AC', { L: 0.77, H: 0.44 });
+  const pr = weight('PR', changed ? { N: 0.85, L: 0.68, H: 0.5 } : { N: 0.85, L: 0.62, H: 0.27 }), ui = weight('UI', { N: 0.85, R: 0.62 });
+  const cia = ['C', 'I', 'A'].map(metric => weight(metric, { H: 0.56, L: 0.22, N: 0 }));
+  if ([av, ac, pr, ui, ...cia].some(value => value === undefined)) return undefined;
+  const iss = 1 - cia.reduce((product, value) => product * (1 - value), 1);
+  const impact = changed ? 7.52 * (iss - 0.029) - 3.25 * Math.pow(iss - 0.02, 15) : 6.42 * iss;
+  if (impact <= 0) return 0;
+  const sum = Math.min((changed ? 1.08 : 1) * (impact + 8.22 * av * ac * pr * ui), 10);
+  if (version === '3.0') return Math.ceil(sum * 10) / 10;
+  // CVSS 3.1 rounds up to one decimal from a whole number of hundred-thousandths, so float error cannot round 4.0 to 4.1.
+  const whole = Math.round(sum * 100000);
+  return whole % 10000 === 0 ? whole / 100000 : (Math.floor(whole / 10000) + 1) / 10;
+}
+
 function scorerWords(by: string): string {
   return by === 'cna' ? 'the numbering authority' : by === 'cisa' ? 'CISA' : by === 'nvd' ? 'NVD' : by;
 }
@@ -1576,10 +1792,10 @@ const SEVERITIES = ['critical', 'high', 'medium', 'low', 'none', 'unscored'];
 
 // What the import holds, in one read, with a form for while the first full pass is still arriving.
 // windowDays is undefined for cve://kev, which holds only the known exploited CVEs.
-function overviewFile(counts: Counts, whole: boolean, windowDays: number | undefined, types: ReadonlySet<string> | undefined, epssDate: string | undefined, published?: PublishedByDay): string {
+function overviewFile(counts: Counts, whole: boolean, windowDays: number | undefined, types: ReadonlySet<string> | undefined, epssDate: string | undefined, published?: PublishedByDay, olderRescored?: number): string {
   const scope = windowDays === undefined
     ? 'the CVEs CISA lists as known exploited, whatever their age'
-    : `the CVEs published in the last ${windowDays} days, and every CVE CISA lists as known exploited, whatever its age`;
+    : `the CVEs published in the last ${windowDays} days, every CVE whose CVSS score NVD changed in them, and every CVE CISA lists as known exploited, whatever its age`;
   const lines = [windowDays === undefined ? '# CVEs known to be exploited' : '# CVEs published recently, and every one known to be exploited', ''];
   lines.push(whole
     ? `This import holds ${scope}: ${counts.total - counts.rejected} CVEs, and ${counts.rejected} withdrawn by their numbering authority. ${counts.kev} are known exploited. NVD is where they are read from.`
@@ -1597,6 +1813,15 @@ function overviewFile(counts: Counts, whole: boolean, windowDays: number | undef
       `FROM cve_vulnerabilities`,
       `WHERE starts_with(uri, 'cve://recent/') AND published >= CAST(now() AT TIME ZONE 'UTC' AS DATE) - INTERVAL 2 DAY`,
       `GROUP BY day ORDER BY day`, '```');
+    lines.push('', `## Rescored`, '',
+      `${olderRescored ?? 0} CVEs published before the window are here because NVD's change history shows a CVSS score of theirs added, changed or removed in it. Each says so in \`score_changes\`, such as \`CVSS 3.1 from NVD: 5.3 → 9.8 on 2026-11-15\`, in \`rescored\`, the instant of the newest change, and in its \`cve.rescored\` annotation. Its file stays under the month it was published, at its severity now.`,
+      '', 'The CVEs published before the window and modified in it, newest change first, with what changed:', '', '```sql',
+      `SELECT id, published, modified, rescored, severity, score_changes`,
+      `FROM cve_vulnerabilities`,
+      `WHERE starts_with(uri, 'cve://recent/') AND published < (now() AT TIME ZONE 'UTC') - INTERVAL ${windowDays} DAY`,
+      `  AND modified >= (now() AT TIME ZONE 'UTC') - INTERVAL ${windowDays} DAY`,
+      `ORDER BY modified DESC`, '```', '',
+      'A CVE known to be exploited is held whatever its age, so this lists those NVD modified in any way, and the rest because they were rescored. `WHERE rescored IS NOT NULL` keeps the rescored alone.');
   }
   lines.push('', '## By month', '', '| Month | CVEs |', '|-------|-----:|');
   for (const month of Object.keys(counts.byMonth).sort().reverse()) lines.push(`| \`cves/${month}/\` | ${counts.byMonth[month]} |`);

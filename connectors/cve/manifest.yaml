@@ -2,7 +2,7 @@
 # every change: a published version never changes.
 package:
   id: RepoQL.Connectors.Cve
-  version: 1.4.1
+  version: 1.5.0
   authors: RepoQL
 scheme: cve
 title: Publicly reported vulnerabilities (CVEs)
@@ -11,7 +11,7 @@ calls: [parse, fetch, analyze, render, invoke]
 # Version 1 keeps each CVE as NVD answers it, cut to what render shows: see Cve in connector.ts. A change to what a
 # CVE's row keeps raises CVE_SHAPE there instead, and the next pass reads every CVE again.
 recordsVersion: 1
-# cve://recent holds the CVEs published in the window and every known exploited one; cve://kev only the known exploited.
+# cve://recent holds the CVEs published in the window, those rescored in it, and every known exploited one; cve://kev only the known exploited.
 uri:
   example: cve://recent
 # NVD asks that an incremental client poll no more often than every two hours. A full pass reads the whole window
@@ -26,7 +26,9 @@ inference: true
 network:
   hosts:
     - url: https://services.nvd.nist.gov/rest/json/cves/2.0
-      note: NVD's CVE API, read without a key. Every request is a GET that lists, 200 to a page, the CVEs published or last modified in a window of at most 120 days, or the CVEs CISA lists as known exploited.
+      note: NVD's CVE API, read without a key. Every request is a GET that lists, 200 to a page, the CVEs published or last modified in a window of at most 120 days, or the CVEs CISA lists as known exploited, or reads one CVE by its id, when the change history names one rescored that no listing returned.
+    - url: https://services.nvd.nist.gov/rest/json/cvehistory/2.0
+      note: NVD's change history, read without a key, in cve://recent only. Every request is a GET of 2,000 changes NVD recorded in a window, so a CVE whose CVSS score was added, changed or removed in the import's window is held whatever its age. A full pass reads the window's changes, about 46 requests a month of them; any other pass reads the changes since the last, usually one.
     - url: https://api.first.org/data/v1/epss
       note: FIRST's EPSS API. Every request is a GET of 10,000 scores, once a day, when EPSS publishes the day's scores.
     - url: https://cwe-api.mitre.org/api/v1/cwe/**

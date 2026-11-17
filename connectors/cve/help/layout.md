@@ -1,11 +1,11 @@
 ---
 description: How to ask a cve import which vulnerabilities were reported, how severe they are, what software they are in, which are exploited, and which of the workspace's dependencies an advisory names — the glob to read or the query to run for each.
-tags: [cve, published, publish date, published in the last days, new cves, per day, modified, last modified, lastModified, cwe, weakness, weaknesses, cwe_weaknesses, vulnerability, vulnerabilities, security, advisory, nvd, cvss, severity, critical, kev, known exploited, epss, exploit, osv, ghsa, dependency, dependencies, package, purl, affected, reachable, fix, patch, cve_vulnerabilities, cve_products, cve_in_range, cve_version_key, in range, is this version affected, compare versions, product, products, version, range, version range, affected versions, fixed version, first_unaffected, cve_recent, cve_known_exploited, cve_packages, cve_dependency_findings, cve_advisories, cve_affects, cve_epss]
+tags: [cve, rescored, reclassified, rescore, score changed, severity changed, score_changes, cvehistory, change history, published, publish date, published in the last days, new cves, per day, modified, last modified, lastModified, cwe, weakness, weaknesses, cwe_weaknesses, vulnerability, vulnerabilities, security, advisory, nvd, cvss, severity, critical, kev, known exploited, epss, exploit, osv, ghsa, dependency, dependencies, package, purl, affected, reachable, fix, patch, cve_vulnerabilities, cve_products, cve_in_range, cve_version_key, in range, is this version affected, compare versions, product, products, version, range, version range, affected versions, fixed version, first_unaffected, cve_recent, cve_known_exploited, cve_packages, cve_dependency_findings, cve_advisories, cve_affects, cve_epss]
 ---
 
 # Asking a cve import
 
-An import of `cve://recent` holds each CVE published in the last 30 days, or the window its copy of the connector states, and every CVE CISA lists as known exploited whatever its age, as an RQL object. An import of `cve://kev` holds only the known exploited. CISA's listing can lag a CVE's publication by days or weeks, so a new critical CVE can be in `cve://recent` before it is in `cve://kev`. The path files each one by when it was published, how severe it is, and what type of software it is in:
+An import of `cve://recent` holds each CVE published in the last 30 days, or the window its copy of the connector states, each CVE whose CVSS score NVD's change history shows was added, changed or removed in the window whatever its age, and every CVE CISA lists as known exploited whatever its age, as an RQL object. An import of `cve://kev` holds only the known exploited. CISA's listing can lag a CVE's publication by days or weeks, so a new critical CVE can be in `cve://recent` before it is in `cve://kev`. The path files each one by when it was published, how severe it is, and what type of software it is in:
 
 ```
 cve://recent/cves/<YYYY-MM>/<severity>/<type>/<vendor>/<product>/<CVE id>.rqlobject
@@ -20,6 +20,7 @@ The import has two trees. `cves/**` holds the CVEs and `weaknesses/**` the CWE e
 | What was published this month? | `cve://recent/cves/2026-11/**` | `SELECT * FROM cve_vulnerabilities WHERE month = '2026-11'` |
 | How many were published on each of the last few days? | `overview.md`, for the last 7 | `SELECT CAST(published AS DATE) AS day, count(*) AS cves FROM cve_vulnerabilities WHERE starts_with(uri, 'cve://recent/') AND published >= CAST(now() AT TIME ZONE 'UTC' AS DATE) - INTERVAL 2 DAY GROUP BY day ORDER BY day` |
 | What did NVD publish or change in the last few days? | | `SELECT * FROM cve_recent(3)` |
+| Which older CVEs were rescored, and how? | `overview.md` | `SELECT id, published, rescored, severity, score_changes FROM cve_vulnerabilities WHERE rescored IS NOT NULL AND published < (now() AT TIME ZONE 'UTC') - INTERVAL 30 DAY ORDER BY rescored DESC` |
 | What is critical? | `cve://recent/cves/*/critical/**` | `SELECT id, type, vendor, product FROM cve_vulnerabilities WHERE severity = 'critical'` |
 | What is in libraries, or in one vendor's software? | `cve://recent/cves/*/*/libraries/**`, `cve://recent/cves/*/*/*/apache/**` | `SELECT * FROM cve_vulnerabilities WHERE type = 'libraries'` |
 | What is being exploited now? | `overview.md` | `SELECT * FROM cve_known_exploited` |
@@ -54,7 +55,8 @@ The import has two trees. `cves/**` holds the CVEs and `weaknesses/**` the CWE e
 - `cve.known-exploited`: CISA lists it as exploited;
 - `cve.unread`: neither the rules nor the model could say what type of software it is in;
 - `cve.rejected`: its numbering authority withdrew it;
-- `cve.products-cut`: the record names more affected products than the file keeps, and `details` holds how many it names and how many are kept.
+- `cve.products-cut`: the record names more affected products than the file keeps, and `details` holds how many it names and how many are kept;
+- `cve.rescored`: NVD's change history shows a CVSS score of it added, changed or removed after it was published, in the window, and the message says each change.
 
 ## Reading it right
 
@@ -68,6 +70,7 @@ The import has two trees. `cves/**` holds the CVEs and `weaknesses/**` the CWE e
 - **Severity has one scorer.** It is the first of: the numbering authority's CVSS, then CISA's, then NVD's, with 4.0 before 3.1. `cvss_source` says which. `unscored` means nobody has scored it yet, not that it is harmless.
 - **Type is a rule's reading, or a model's.** `type_rule` says which: a rule names where it matched, such as `name:os` or `assigner:cms`, and `model` means no rule recognised the CVE. `unclassified` means neither could say. `attack_vector` is the scorer's CVSS vector, and `code_execution` the CVE's own words and weaknesses, so `WHERE attack_vector = 'network' AND code_execution` asks for remote code execution.
 - **Exploited, or exploitable.** `known_exploited` is CISA's catalog. `exploitation` is CISA's SSVC decision, which it makes for almost every new CVE: `active` is exploited, `poc` means an exploit is public though nobody is yet seen using it, and `none` that neither is known. `WHERE exploitation = 'poc' AND automatable = 'yes'` asks for the CVEs most likely to be exploited next. Null means CISA has not decided, not that no exploit exists.
+- **Rescored is a score's change, in words.** `rescored` is the instant of the newest CVSS change NVD's change history records for a CVE after it was published, and `score_changes` each change, such as `CVSS 3.1 from NVD: 5.3 → 9.8 on 2026-11-15`, or `scored 9.8` for a score added and `5.3 withdrawn` for one removed. The history carries vectors, not scores: a 3.x score is worked out from its vector, and a 4.0 one is the score the record holds for that vector, or the vector itself. The scores a CVE arrives with are no change. A rescored CVE keeps the path of the month it was published, at its severity now. Its severity changed only when the score that sets it did: compare `cvss_source` with who changed the score.
 - **Published is not modified.** `published` is when NVD published a CVE, and `modified` when it last changed it, both UTC. A file's mtime is `modified`, so counting files by mtime counts changes, not new CVEs. `cve_recent(days)` holds every CVE modified in the window, which includes each one published in it: to count new CVEs, filter on `published`. The path's month is the month of `published`.
 - **A CVE's file moves when its severity or type changes.** Cite it by its origin, `https://www.cve.org/CVERecord?id=<id>`, never by its path.
 - **`cve_affects`, `cve_advisories` and `cve_dependency_findings` ask OSV, live.** They send the package names and versions a query passes them, and answer from OSV's advisories, not from this import. Every other view reads only what the import holds.
