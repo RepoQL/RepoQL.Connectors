@@ -825,10 +825,14 @@ export default class Cves extends Connector {
     }
 
     // A CVE gone from the import: its place is still held, because analyze has not run since fetch removed it.
-    const gone = this.db.getMany<Placed>('placed', removed);
-    for (const key of removed) {
-      if (gone[key]) this.files.remove(gone[key].path);
-      if (gone[key]?.from) this.files.remove(gone[key].from as string);
+    // A read names at most 10,000 keys, and a full pass after the window narrows can remove more, so it is sliced.
+    for (let start = 0; start < removed.length; start += 1000) {
+      const slice = removed.slice(start, start + 1000);
+      const gone = this.db.getMany<Placed>('placed', slice);
+      for (const key of slice) {
+        if (gone[key]) this.files.remove(gone[key].path);
+        if (gone[key]?.from) this.files.remove(gone[key].from as string);
+      }
     }
 
     const ordered = [...keys].sort();
