@@ -2,7 +2,7 @@
 # every change: a published version never changes.
 package:
   id: RepoQL.Connectors.Cve
-  version: 1.4.1
+  version: 1.5.0
   authors: RepoQL
 scheme: cve
 title: Publicly reported vulnerabilities (CVEs)
@@ -32,12 +32,12 @@ network:
     - url: https://cwe-api.mitre.org/api/v1/cwe/**
       note: MITRE's CWE API. On a full pass, about 22 GETs read every weakness and category of the CWE list, so CVEs link to the weaknesses they name.
     - url: https://api.osv.dev/v1/querybatch
-      note: OSV's batch query, called only by the function cve_affects, with the package names and versions a query passes it. A query is a POST.
+      note: OSV's batch query, called only by the function cve_affects, with the package names and versions a query passes it. cve_dependency_findings passes it the workspace's dependencies whose address names their ecosystem's public registry. A query is a POST.
   # NVD allows 5 requests in a rolling 30 seconds without a key. This stays under it.
   requestsPerMinute: 9
 functions:
   affects:
-    description: The OSV advisories that name one package at one version, as a JSON list of their ids, such as ["GHSA-5crp-9r3c-p9vr"], or [] for none. The ecosystem is OSV's name for it, such as NuGet, Go, Maven or npm. A list is whole or the call fails; a distribution's kernel can name more than one call reads.
+    description: The OSV advisories that name one package at one version, as a JSON list of their ids, such as ["GHSA-5crp-9r3c-p9vr"], or [] for none. The ecosystem is OSV's name for it, such as NuGet, Go, Maven, npm, PyPI, crates.io, RubyGems or Packagist. A list is whole or the call fails; a distribution's kernel can name more than one call reads.
     parameters: [{ name: ecosystem, type: text }, { name: package, type: text }, { name: version, type: text }]
     returns: json
     batch: 1000

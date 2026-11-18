@@ -1,0 +1,5 @@
+-- The dependencies cve_dependency_findings does not ask OSV about, declared in a file whose URI matches the pattern files, a row each: the ecosystem as the dependencies view spells it, the package, the range that applies to it, its pin, the file that states the requirement, and unchecked, which says why. 'no-version' means no file settles a version, as for a range no lock file resolves: add the lock file, or ask cve_advisories about the versions the range admits. 'not-the-public-registry' means the package comes from another registry than the ecosystem's public one, or from none the files name, so its name is not sent to OSV. 'no-osv-ecosystem' means OSV has no name here for the ecosystem, such as oci for a container image. No row here means every dependency in the files was asked. files is matched as cve_dependency_findings matches it.
+macro (files) table
+SELECT DISTINCT ecosystem, package, range, pin, declared_in, unchecked
+FROM cve_dependency_questions(files)
+WHERE unchecked IS NOT NULL

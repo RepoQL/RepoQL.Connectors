@@ -91,5 +91,318 @@
     }
    ]
   }
+ },
+ "dependencies": {
+  "note": "Eight rows of the dependencies view, one for each ecosystem OSV names, each read from a real file of a public repository, with what OSV answered for it on 2026-11-18. row is the row's ecosystem, address, version, pin and range; query is what cve_dependency_findings asks OSV about it.",
+  "rows": [
+   {
+    "from": "modelcontextprotocol/csharp-sdk, package-lock.json line 471: node_modules/express-rate-limit at 8.2.1",
+    "row": {
+     "ecosystem": "npm",
+     "address": "npm://registry.npmjs.org/express-rate-limit",
+     "version": "8.2.1",
+     "pin": "locked",
+     "range": "^8.2.1"
+    },
+    "query": {
+     "package": {
+      "ecosystem": "npm",
+      "name": "express-rate-limit"
+     },
+     "version": "8.2.1"
+    },
+    "answer": {
+     "vulns": [
+      {
+       "id": "GHSA-46wh-pxpv-q5gq",
+       "modified": "2026-09-10T03:50:36.934542Z"
+      }
+     ]
+    }
+   },
+   {
+    "from": "JasperFx/lamar, src/LamarRest/LamarRest.csproj: PackageReference Newtonsoft.Json 12.0.1, which NuGet restores as the lowest version",
+    "row": {
+     "ecosystem": "nuget",
+     "address": "nuget://nuget.org/Newtonsoft.Json",
+     "version": null,
+     "pin": "minimum",
+     "range": "12.0.1"
+    },
+    "query": {
+     "package": {
+      "ecosystem": "NuGet",
+      "name": "Newtonsoft.Json"
+     },
+     "version": "12.0.1"
+    },
+    "answer": {
+     "vulns": [
+      {
+       "id": "GHSA-5crp-9r3c-p9vr",
+       "modified": "2026-07-08T06:53:11.583483Z"
+      }
+     ]
+    }
+   },
+   {
+    "from": "apache/druid, extensions-contrib/ambari-metrics-emitter/pom.xml line 132, at the version pom.xml line 1222 manages",
+    "row": {
+     "ecosystem": "maven",
+     "address": "maven://repo.maven.apache.org/org.codehaus.jackson:jackson-mapper-asl",
+     "version": "1.9.13",
+     "pin": "managed",
+     "range": null
+    },
+    "query": {
+     "package": {
+      "ecosystem": "Maven",
+      "name": "org.codehaus.jackson:jackson-mapper-asl"
+     },
+     "version": "1.9.13"
+    },
+    "answer": {
+     "vulns": [
+      {
+       "id": "GHSA-c27h-mcmw-48hv",
+       "modified": "2026-09-10T03:49:32.733691Z"
+      },
+      {
+       "id": "GHSA-r6j9-8759-g62w",
+       "modified": "2026-09-10T03:48:28.575777Z"
+      }
+     ]
+    }
+   },
+   {
+    "from": "junegunn/fzf, go.mod: require golang.org/x/sys v0.35.0",
+    "row": {
+     "ecosystem": "golang",
+     "address": "go://proxy.golang.org/golang.org/x/sys",
+     "version": null,
+     "pin": "minimum",
+     "range": "v0.35.0"
+    },
+    "query": {
+     "package": {
+      "ecosystem": "Go",
+      "name": "golang.org/x/sys"
+     },
+     "version": "0.35.0"
+    },
+    "answer": {
+     "vulns": [
+      {
+       "id": "GO-2026-5024",
+       "modified": "2026-06-09T18:59:22.740765Z"
+      }
+     ]
+    }
+   },
+   {
+    "from": "python-poetry/poetry at 1.1.0, poetry.lock line 907: urllib3 1.25.10",
+    "row": {
+     "ecosystem": "pypi",
+     "address": "python://pypi.org/urllib3",
+     "version": "1.25.10",
+     "pin": "locked",
+     "range": null
+    },
+    "query": {
+     "package": {
+      "ecosystem": "PyPI",
+      "name": "urllib3"
+     },
+     "version": "1.25.10"
+    },
+    "answer": {
+     "vulns": [
+      {
+       "id": "GHSA-2xpw-w6gg-jr37",
+       "modified": "2026-09-25T17:15:05.968189Z"
+      },
+      {
+       "id": "GHSA-34jh-p97f-mpxf",
+       "modified": "2026-09-10T03:50:14.811193Z"
+      },
+      {
+       "id": "GHSA-38jv-5279-wg99",
+       "modified": "2026-09-10T03:50:32.562010Z"
+      },
+      {
+       "id": "GHSA-g4mx-q9vg-27p4",
+       "modified": "2026-09-10T03:50:03.706889Z"
+      },
+      {
+       "id": "GHSA-gm62-xv2j-4w53",
+       "modified": "2026-09-10T03:50:58.741847Z"
+      },
+      {
+       "id": "GHSA-pq67-6m6q-mj2v",
+       "modified": "2026-09-10T03:50:25.299291Z"
+      },
+      {
+       "id": "GHSA-q2q7-5pp4-w6pg",
+       "modified": "2026-07-08T06:00:54.217433Z"
+      },
+      {
+       "id": "GHSA-qccp-gfcp-xxvc",
+       "modified": "2026-09-10T03:50:47.272765Z"
+      },
+      {
+       "id": "GHSA-v845-jxx5-vc9f",
+       "modified": "2026-09-10T03:49:24.753610Z"
+      },
+      {
+       "id": "GHSA-vxq7-64xx-v4gw",
+       "modified": "2026-10-01T17:55:57.514829Z"
+      },
+      {
+       "id": "PYSEC-2021-108",
+       "modified": "2026-10-13T09:30:02.842062Z"
+      },
+      {
+       "id": "PYSEC-2023-192",
+       "modified": "2023-11-08T04:13:33.452167Z"
+      },
+      {
+       "id": "PYSEC-2023-212",
+       "modified": "2023-11-08T04:13:39.165450Z"
+      },
+      {
+       "id": "PYSEC-2026-141",
+       "modified": "2026-05-20T09:19:20.983812Z"
+      },
+      {
+       "id": "PYSEC-2026-1994",
+       "modified": "2026-07-07T17:48:15.379954Z"
+      },
+      {
+       "id": "PYSEC-2026-1995",
+       "modified": "2026-07-07T17:48:15.400192Z"
+      },
+      {
+       "id": "PYSEC-2026-1996",
+       "modified": "2026-07-07T17:48:15.382053Z"
+      },
+      {
+       "id": "PYSEC-2026-1998",
+       "modified": "2026-07-07T17:47:54.140852Z"
+      },
+      {
+       "id": "PYSEC-2026-1999",
+       "modified": "2026-07-07T17:47:54.161376Z"
+      },
+      {
+       "id": "PYSEC-2026-4177",
+       "modified": "2026-10-01T17:45:18.336090Z"
+      }
+     ]
+    }
+   },
+   {
+    "from": "sharkdp/bat, Cargo.lock line 2956: yaml-rust 0.4.5 from registry+https://github.com/rust-lang/crates.io-index",
+    "row": {
+     "ecosystem": "cargo",
+     "address": "rust://crates.io/yaml-rust",
+     "version": "0.4.5",
+     "pin": "locked",
+     "range": null
+    },
+    "query": {
+     "package": {
+      "ecosystem": "crates.io",
+      "name": "yaml-rust"
+     },
+     "version": "0.4.5"
+    },
+    "answer": {
+     "vulns": [
+      {
+       "id": "RUSTSEC-2024-0320",
+       "modified": "2024-11-01T12:31:51Z"
+      }
+     ]
+    }
+   },
+   {
+    "from": "discourse/discourse at v2.8.0, Gemfile.lock line 49: addressable (2.8.0) from https://rubygems.org/",
+    "row": {
+     "ecosystem": "gem",
+     "address": "ruby-gem://rubygems.org/addressable",
+     "version": "2.8.0",
+     "pin": "locked",
+     "range": null
+    },
+    "query": {
+     "package": {
+      "ecosystem": "RubyGems",
+      "name": "addressable"
+     },
+     "version": "2.8.0"
+    },
+    "answer": {
+     "vulns": [
+      {
+       "id": "GHSA-539f-xcgw-2gjg",
+       "modified": "2026-11-12T23:00:05.606817Z"
+      },
+      {
+       "id": "GHSA-8gmh-2hhj-2hv9",
+       "modified": "2026-11-12T22:45:04.162582Z"
+      },
+      {
+       "id": "GHSA-9crm-g4mf-wc5j",
+       "modified": "2026-11-12T23:00:05.713087Z"
+      },
+      {
+       "id": "GHSA-9f42-57jx-vpp3",
+       "modified": "2026-11-12T22:45:04.068511Z"
+      },
+      {
+       "id": "GHSA-h27x-rffw-24p4",
+       "modified": "2026-09-10T03:51:01.804376Z"
+      },
+      {
+       "id": "GHSA-j82w-28jv-3pmj",
+       "modified": "2026-11-12T22:45:04.063599Z"
+      },
+      {
+       "id": "GHSA-qq38-m9mg-xjj5",
+       "modified": "2026-11-12T22:45:03.586718Z"
+      }
+     ]
+    }
+   },
+   {
+    "from": "composer/composer at 2.0.0, composer.lock line 975: symfony/process v2.8.52",
+    "row": {
+     "ecosystem": "composer",
+     "address": "composer://repo.packagist.org/symfony/process",
+     "version": "v2.8.52",
+     "pin": "locked",
+     "range": null
+    },
+    "query": {
+     "package": {
+      "ecosystem": "Packagist",
+      "name": "symfony/process"
+     },
+     "version": "v2.8.52"
+    },
+    "answer": {
+     "vulns": [
+      {
+       "id": "GHSA-qq5c-677p-737q",
+       "modified": "2026-09-10T03:50:21.051244Z"
+      },
+      {
+       "id": "GHSA-r39x-jcww-82v6",
+       "modified": "2026-09-10T03:50:59.252205Z"
+      }
+     ]
+    }
+   }
+  ]
  }
 }
