@@ -9,6 +9,8 @@ Copies the CVEs published in the last 30 days, and every CVE known to be exploit
 | `cve://recent` | Every CVE published in the window, exploited or not, and every CVE CISA lists as known exploited, whatever its age | About 17,000 CVEs for the default 30 days, and 210,000 for a year |
 | `cve://kev` | Only the CVEs CISA lists as known exploited, whatever their age | About 1,800 CVEs |
 
+The window is measured when a full pass runs, once a week. Between full passes each new CVE is added and none leaves, so `cve://recent` holds from 30 to 37 days: an import whose last full pass was six days ago holds 36.
+
 Known exploited means CISA has evidence of exploitation in the wild, and that evidence can lag publication by days or weeks. Log4Shell, CVE-2021-44228, was listed on the day it was published. PHP's CVE-2026-109618 was published on 21 October 2026, and CISA listed it on 26 October, so for five days only `cve://recent` held it. Import `cve://kev` only if you act on confirmed exploitation alone. EPSS, in `scores/epss.csv`, estimates how likely a CVE is to be exploited before anyone has seen it happen.
 
 The URI names what an import holds, not where it is read from. Both are read from NVD today, and a connector that reads another source keeps the same paths.
@@ -18,7 +20,7 @@ The URI names what an import holds, not where it is read from. Both are read fro
 Two jobs, both run by an agent over an uplink that holds the organization's code and this import side by side:
 
 - **A nightly job.** It asks "are there new CVEs that affect us, and are they reachable?". The question starts as a glob, `cves/2026-11/critical/**`, or a query, `SELECT * FROM cve_recent(1)`. It ends as a question to the code: the agent reads the CVE's fixes and traces the vulnerable function through the code with `explore` and its references.
-- **A review bot.** It checks a pull request's dependency changes against known advisories. `cve_affects` asks OSV about each changed package and version, live.
+- **A review bot.** It checks a pull request's dependency changes against known advisories. `cve_dependency_findings` asks OSV about every dependency the changed manifests and lock files hold, live, and `cve_affects` about one package and version.
 
 ## The questions it answers
 
@@ -35,6 +37,7 @@ Two jobs, both run by an agent over an uplink that holds the organization's code
 | Which have a public exploit, though nobody is seen using it yet? | | `SELECT id, vendor, product FROM cve_vulnerabilities WHERE exploitation = 'poc' AND automatable = 'yes'` |
 | How likely is it to be exploited? | `scores/epss.csv` | `SELECT * FROM cve_epss('cve://recent/') WHERE cve = 'CVE-2026-59822'` |
 | Which of our dependencies has an advisory? | | `SELECT * FROM cve_dependency_findings('file:///**')` |
+| Which dependencies were not checked, and why? | | `SELECT * FROM cve_dependency_unchecked('file:///**')` |
 | Does this package version have one? | | `SELECT cve_affects('NuGet', 'Newtonsoft.Json', '12.0.1')` |
 | What does one CVE say, who scored it, what fixes it? | `cves/.../CVE-….rqlobject => structure` | `#symbol=score-1`, `#symbol=fix-1` |
 | What kind of flaw is it, and what is it related to? | `weaknesses/CWE-1333.rqlobject => structure` | `SELECT * FROM cve_weaknesses ORDER BY cves DESC` |
@@ -46,10 +49,32 @@ Two jobs, both run by an agent over an uplink that holds the organization's code
 - **What it reads.**
   - NVD's CVE API, without a key: the CVEs published in the window and the known exploited, then every two hours those NVD modified since. It reads at most 9 requests a minute, under NVD's anonymous limit of 5 in 30 seconds. On 2026-11-05 the 30-day window held 17,425 CVEs, so a first read is about 90 pages, which takes about ten minutes. A year is about 1,050 pages, about two hours. `cve://kev` is about 9 pages.
   - EPSS's API: 10,000 scores to a page, once a day, when EPSS publishes the day's scores.
-  - OSV's batch query, only when a query calls `cve_affects`. It sends the ecosystem, package names and versions the query passes it.
+  - OSV's batch query, only when a query calls `cve_affects`. It sends the ecosystem, package names and versions the query passes it. `cve_dependency_findings` passes it the workspace's dependencies, and only those whose address names the ecosystem's public registry. For npm, Python, Cargo, Bundler and Composer that keeps a private registry's package from being sent. For NuGet, Maven and Go it cannot, as [Dependencies](#dependencies) says. `cve_dependency_questions` lists what would be sent, and sends nothing.
   - MITRE's CWE API, on a full pass and on the first pass: every weakness and category of the CWE list, in about 22 requests.
 - **What it sends to the model.** Only for a CVE the rules cannot place, about 29% of them, once: the vendor, product and package names its numbering authority states, and its description, cut at 6,000 characters, with one question, its type. Each request is charged to the plan of whoever installed the connector. For the default 30 days that is about 5,000 requests, and a year about 60,000, both inside the 100,000 an import may have answered in a day. Until a CVE is placed, it is filed under `unclassified`. `cve://kev` is a few hundred.
 - **What it writes.** Nothing anywhere: every request but OSV's is a GET, and OSV's batch query only reads.
+
+## Dependencies
+
+`cve_dependency_findings(files)` reads RepoQL's `dependencies` view, so it covers every ecosystem that view reads and OSV names: npm, Yarn, pnpm and Bun; NuGet; Maven and Gradle; Go; Python; Cargo; Bundler; and Composer. It reads a lock file's own entries too, so a vulnerable package nothing in the manifest names is found. It needs rql 1.7.23 or later, the first release whose `dependencies` view states each usage's `pin`.
+
+| `dependencies` ecosystem | OSV's name | The public registry its address must name |
+|--------------------------|------------|-------------------------------------------|
+| `npm` | `npm` | `npm://registry.npmjs.org/` |
+| `nuget` | `NuGet` | `nuget://nuget.org/` |
+| `maven` | `Maven` | `maven://repo.maven.apache.org/` |
+| `golang` | `Go` | `go://proxy.golang.org/` |
+| `pypi` | `PyPI` | `python://pypi.org/` |
+| `cargo` | `crates.io` | `rust://crates.io/` |
+| `gem` | `RubyGems` | `ruby-gem://rubygems.org/` |
+| `composer` | `Packagist` | `composer://repo.packagist.org/` |
+
+The table is `sql/osv_question.sql`, and a new ecosystem is one line there.
+
+- **A package is matched by its registry address, not by its name alone.** OSV knows the public registries. A package a private registry serves is another package than the public one of that name, so it is not asked, and its name is not sent. RepoQL writes every NuGet, Maven and Go package at its public address, whatever feed, repository or proxy serves it, so for those three the files cannot tell a private package from a public one: its name and version are sent, as they were before this macro read other ecosystems. `cve_dependency_questions` shows each one first.
+- **A dependency that was not asked is listed, not dropped.** `cve_dependency_unchecked(files)` has a row for each, with the reason: `no-version` when no file settles a version, `not-the-public-registry`, or `no-osv-ecosystem`, as for a container image. No finding means nothing was found among the dependencies that were asked. Read both before calling anything clean.
+- **The version asked is the version in effect, where a file settles one**: a lock file's entry, a version a parent POM manages, or an exact requirement. A Go `require` and a NuGet `1.2.3` are minimums, so they are asked at that version, and the row's `pin` says `minimum`: the build may hold a later one. A requirement under NuGet's central package management is asked at the version its `Directory.Packages.props` sets.
+- **A component a package embeds is not a dependency.** A native library or a runtime inside a package is found only by searching the CVEs' products and descriptions.
 
 ## Weaknesses
 
@@ -114,7 +139,9 @@ rql connector test connector.ts --fixtures suite.kev.json
 
 Until rql reads the manifest's `package` block, run the suites on a staged copy: see [the repository's README](../../README.md#until-rql-reads-the-package-block).
 
-Every recorded answer is real: the NVD, EPSS, OSV and CWE responses in `fixtures/` were captured on 2026-11-05, and a few records since, as each fixture file says.
+Every recorded answer is real: the NVD, EPSS, OSV and CWE responses in `fixtures/` were captured on 2026-11-05, and a few records since, as each fixture file says. Each of the eight dependency rows in `fixtures/osv.json` is read from a real file of a public repository, which its `from` names, with what OSV answered for it on 2026-11-18.
+
+A suite cannot hold a workspace's manifests and lock files, so it proves what is asked for one row of `dependencies`, through `cve_dependency_check`, and not the read of the view itself. Prove that on a host: `SELECT * FROM cve_dependency_questions('file:///**')` sends nothing.
 
 ## Install
 

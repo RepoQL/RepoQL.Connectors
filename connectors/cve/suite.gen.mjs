@@ -19,6 +19,7 @@ const EPSS_FIXTURE = fixture('epss.json');
 const OSV_FIXTURE = fixture('osv.json');
 const CWE_FIXTURE = fixture('cwe.json');
 const PAGED = OSV_FIXTURE.paged;
+const DEPENDENCY_ROWS = OSV_FIXTURE.dependencies.rows;
 
 const source = readFileSync(new URL('connector.ts', import.meta.url), 'utf8');
 const literal = /\/\/ BEGIN QUESTIONS\r?\nconst QUESTIONS = ([\s\S]*?);\r?\n\/\/ END QUESTIONS/.exec(source);
@@ -192,12 +193,22 @@ const LOG4J_PATH = 'cves/2021-12/critical/libraries/apache-software-foundation/a
 const PHP_PATH = 'cves/2012-05/critical/runtimes/php/php/CVE-2012-1823.rqlobject';
 const origin = id => `https://www.cve.org/CVERecord?id=${id}`;
 
+// A range that asks the same question as the row of its ecosystem: NuGet restores the lower bound of an interval that
+// includes it, so the interval is asked at that version, and the one request the generation records answers both.
+const INTERVALS = { nuget: ['[12.0.1, 13.0.0)'] };
+
+// cve_dependency_check, called with one row of the dependencies view: its ecosystem, address, version, pin and range.
+function dependencyCheck({ ecosystem, address, version, pin, range }) {
+  const sql = value => value === null ? 'NULL' : `'${value.replaceAll("'", "''")}'`;
+  return `cve_dependency_check(${[ecosystem, address, version, pin, range].map(sql).join(', ')})`;
+}
+
 const G1 = '2026-11-05T06:00:00Z';
 const WATERMARK = '2026-11-02T19:35:33.347Z';
 
 const suite = {
   import: 'cve://recent',
-  description: 'The CVE connector over NVD, as the import cve://recent: a first read of the 30-day window and of every known exploited CVE, in which the model reads every CVE and each is filed by month, severity and type; two hours with nothing new; a numbering authority scores a CVE, which moves it; a CVE is rejected, which moves it to rejected/; NVD fails, which removes nothing; a CVE the model cannot read yet arrives unclassified; cve_affects asks OSV about a package version, and follows OSV\'s page token; and a year later a full pass removes every CVE that left the window, but keeps the known exploited.',
+  description: 'The CVE connector over NVD, as the import cve://recent: a first read of the 30-day window and of every known exploited CVE, in which the model reads every CVE and each is filed by month, severity and type; two hours with nothing new; a numbering authority scores a CVE, which moves it; a CVE is rejected, which moves it to rejected/; NVD fails, which removes nothing; a CVE the model cannot read yet arrives unclassified; cve_affects asks OSV about a package version, and follows OSV\'s page token; a dependency of each ecosystem OSV names is asked under OSV\'s name for it, and one that cannot be asked is not sent; and a year later a full pass removes every CVE that left the window, but keeps the known exploited.',
   answers: [
     reading(BROTLI, 'libraries', 0.15, 0.35),
     reading(DLINK, 'devices', 0.42, 0.94),
@@ -356,6 +367,33 @@ const suite = {
         { method: 'POST', url: OSV_BATCH, status: 200, bodySha256: sha256(JSON.stringify({ queries: [{ ...PAGED.query, page_token: PAGED.first.next_page_token }] })), json: { results: [PAGED.second] } },
       ],
       expect: { views: { "cve_advisories('Debian:12', 'linux', '6.1.1-1')": { rows: 6, contains: [{ advisory: PAGED.second.vulns[0].id }, { advisory: PAGED.first.vulns[0].id }] } } },
+    },
+    // One generation for each ecosystem: a row of the dependencies view, read from a real file, is asked of OSV under
+    // OSV's own name for the ecosystem and the registry's name for the package, and the advisories OSV named come back.
+    ...DEPENDENCY_ROWS.map(({ row, query, answer }, index) => ({
+      // Where each row is from is its `from` in fixtures/osv.json.
+      name: `a ${row.ecosystem} dependency is asked of OSV as ${query.package.ecosystem} ${query.package.name} ${query.version}, and its advisories come back`,
+      clock: iso(Date.parse('2026-11-05T18:00:00Z') + index * 60000), pass: 'none',
+      interactions: [{ method: 'POST', url: OSV_BATCH, status: 200, bodySha256: sha256(JSON.stringify({ queries: [query] })), json: { results: [answer] } }],
+      expect: { views: Object.fromEntries([row, ...(INTERVALS[row.ecosystem] ?? []).map(range => ({ ...row, range }))].map(asked => [dependencyCheck(asked),
+        { rows: 1, contains: [{ ecosystem: query.package.ecosystem, package: query.package.name, version: query.version, unchecked: null, advisories: answer.vulns.map(vuln => vuln.id).sort() }] }])) },
+    })),
+    {
+      // No interaction is recorded, and a request no interaction answers fails the generation: none of these is sent.
+      name: 'a dependency that cannot be asked is not sent to OSV, and says why: a private registry\'s package, a requirement no file resolves, and a container image',
+      clock: '2026-11-05T18:30:00Z', pass: 'none',
+      expect: { views: {
+        [dependencyCheck({ ecosystem: 'npm', address: 'npm://npm.pkg.github.com/@example/billing', version: '1.4.0', pin: 'locked', range: null })]: { rows: 1, contains: [{ unchecked: 'not-the-public-registry', package: null, advisories: null }] },
+        [dependencyCheck({ ecosystem: 'cargo', address: 'unresolved://component/serde', version: '1.0.0', pin: 'exact', range: null })]: { rows: 1, contains: [{ unchecked: 'not-the-public-registry', advisories: null }] },
+        [dependencyCheck({ ecosystem: 'npm', address: 'npm://registry.npmjs.org/yaml', version: null, pin: 'range', range: '^2.8.2' })]: { rows: 1, contains: [{ unchecked: 'no-version', advisories: null }] },
+        [dependencyCheck({ ecosystem: 'npm', address: null, version: null, pin: 'not-installed', range: '^0.22.4' })]: { rows: 1, contains: [{ unchecked: 'no-version', advisories: null }] },
+        [dependencyCheck({ ecosystem: 'nuget', address: 'nuget://nuget.org/Newtonsoft.Json', version: null, pin: 'minimum', range: '(12.0.1, 13.0.0)' })]: { rows: 1, contains: [{ unchecked: 'no-version', advisories: null }] },
+        [dependencyCheck({ ecosystem: 'oci', address: 'oci://docker.io/library/node', version: '22.23.4', pin: 'exact', range: null })]: { rows: 1, contains: [{ unchecked: 'no-osv-ecosystem', advisories: null }] },
+        // The import holds no manifest and no lock file, so each reads the dependencies view and finds no row.
+        "cve_dependency_questions('*')": { rows: 0 },
+        "cve_dependency_findings('*')": { rows: 0 },
+        "cve_dependency_unchecked('*')": { rows: 0 },
+      } },
     },
     {
       name: 'a year later, a full pass lists nothing published in the window: every CVE leaves, with its score, reading, place and file, but the known exploited, which stay whatever their age',

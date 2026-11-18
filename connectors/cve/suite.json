@@ -1,6 +1,6 @@
 {
  "import": "cve://recent",
- "description": "The CVE connector over NVD, as the import cve://recent: a first read of the 30-day window and of every known exploited CVE, in which the model reads every CVE and each is filed by month, severity and type; two hours with nothing new; a numbering authority scores a CVE, which moves it; a CVE is rejected, which moves it to rejected/; NVD fails, which removes nothing; a CVE the model cannot read yet arrives unclassified; cve_affects asks OSV about a package version, and follows OSV's page token; and a year later a full pass removes every CVE that left the window, but keeps the known exploited.",
+ "description": "The CVE connector over NVD, as the import cve://recent: a first read of the 30-day window and of every known exploited CVE, in which the model reads every CVE and each is filed by month, severity and type; two hours with nothing new; a numbering authority scores a CVE, which moves it; a CVE is rejected, which moves it to rejected/; NVD fails, which removes nothing; a CVE the model cannot read yet arrives unclassified; cve_affects asks OSV about a package version, and follows OSV's page token; a dependency of each ecosystem OSV names is asked under OSV's name for it, and one that cannot be asked is not sent; and a year later a full pass removes every CVE that left the window, but keeps the known exploited.",
  "answers": [
   {
    "decide": {
@@ -9460,6 +9460,572 @@
         "advisory": "DEBIAN-CVE-2004-0230"
        }
       ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a npm dependency is asked of OSV as npm express-rate-limit 8.2.1, and its advisories come back",
+   "clock": "2026-11-05T18:00:00.000Z",
+   "pass": "none",
+   "interactions": [
+    {
+     "method": "POST",
+     "url": "https://api.osv.dev/v1/querybatch",
+     "status": 200,
+     "bodySha256": "71939cad6aab07acfc3dc410c162131fe6be28cc4c8637f654915d6b733134b5",
+     "json": {
+      "results": [
+       {
+        "vulns": [
+         {
+          "id": "GHSA-46wh-pxpv-q5gq",
+          "modified": "2026-09-10T03:50:36.934542Z"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "expect": {
+    "views": {
+     "cve_dependency_check('npm', 'npm://registry.npmjs.org/express-rate-limit', '8.2.1', 'locked', '^8.2.1')": {
+      "rows": 1,
+      "contains": [
+       {
+        "ecosystem": "npm",
+        "package": "express-rate-limit",
+        "version": "8.2.1",
+        "unchecked": null,
+        "advisories": [
+         "GHSA-46wh-pxpv-q5gq"
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a nuget dependency is asked of OSV as NuGet Newtonsoft.Json 12.0.1, and its advisories come back",
+   "clock": "2026-11-05T18:01:00.000Z",
+   "pass": "none",
+   "interactions": [
+    {
+     "method": "POST",
+     "url": "https://api.osv.dev/v1/querybatch",
+     "status": 200,
+     "bodySha256": "a1b305203f9ee2b1811091ae077e935b8dc600ed5131284a75469aebabab7f0c",
+     "json": {
+      "results": [
+       {
+        "vulns": [
+         {
+          "id": "GHSA-5crp-9r3c-p9vr",
+          "modified": "2026-07-08T06:53:11.583483Z"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "expect": {
+    "views": {
+     "cve_dependency_check('nuget', 'nuget://nuget.org/Newtonsoft.Json', NULL, 'minimum', '12.0.1')": {
+      "rows": 1,
+      "contains": [
+       {
+        "ecosystem": "NuGet",
+        "package": "Newtonsoft.Json",
+        "version": "12.0.1",
+        "unchecked": null,
+        "advisories": [
+         "GHSA-5crp-9r3c-p9vr"
+        ]
+       }
+      ]
+     },
+     "cve_dependency_check('nuget', 'nuget://nuget.org/Newtonsoft.Json', NULL, 'minimum', '[12.0.1, 13.0.0)')": {
+      "rows": 1,
+      "contains": [
+       {
+        "ecosystem": "NuGet",
+        "package": "Newtonsoft.Json",
+        "version": "12.0.1",
+        "unchecked": null,
+        "advisories": [
+         "GHSA-5crp-9r3c-p9vr"
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a maven dependency is asked of OSV as Maven org.codehaus.jackson:jackson-mapper-asl 1.9.13, and its advisories come back",
+   "clock": "2026-11-05T18:02:00.000Z",
+   "pass": "none",
+   "interactions": [
+    {
+     "method": "POST",
+     "url": "https://api.osv.dev/v1/querybatch",
+     "status": 200,
+     "bodySha256": "17ceb964f0560bc5f77f1e47b43d53df30ec478386b00c5d96e336910cee662a",
+     "json": {
+      "results": [
+       {
+        "vulns": [
+         {
+          "id": "GHSA-c27h-mcmw-48hv",
+          "modified": "2026-09-10T03:49:32.733691Z"
+         },
+         {
+          "id": "GHSA-r6j9-8759-g62w",
+          "modified": "2026-09-10T03:48:28.575777Z"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "expect": {
+    "views": {
+     "cve_dependency_check('maven', 'maven://repo.maven.apache.org/org.codehaus.jackson:jackson-mapper-asl', '1.9.13', 'managed', NULL)": {
+      "rows": 1,
+      "contains": [
+       {
+        "ecosystem": "Maven",
+        "package": "org.codehaus.jackson:jackson-mapper-asl",
+        "version": "1.9.13",
+        "unchecked": null,
+        "advisories": [
+         "GHSA-c27h-mcmw-48hv",
+         "GHSA-r6j9-8759-g62w"
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a golang dependency is asked of OSV as Go golang.org/x/sys 0.35.0, and its advisories come back",
+   "clock": "2026-11-05T18:03:00.000Z",
+   "pass": "none",
+   "interactions": [
+    {
+     "method": "POST",
+     "url": "https://api.osv.dev/v1/querybatch",
+     "status": 200,
+     "bodySha256": "9f00de502b6481820f584dd9d17f8e8d7a3c6f0230f4b9522c3c731bd3f1995f",
+     "json": {
+      "results": [
+       {
+        "vulns": [
+         {
+          "id": "GO-2026-5024",
+          "modified": "2026-06-09T18:59:22.740765Z"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "expect": {
+    "views": {
+     "cve_dependency_check('golang', 'go://proxy.golang.org/golang.org/x/sys', NULL, 'minimum', 'v0.35.0')": {
+      "rows": 1,
+      "contains": [
+       {
+        "ecosystem": "Go",
+        "package": "golang.org/x/sys",
+        "version": "0.35.0",
+        "unchecked": null,
+        "advisories": [
+         "GO-2026-5024"
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a pypi dependency is asked of OSV as PyPI urllib3 1.25.10, and its advisories come back",
+   "clock": "2026-11-05T18:04:00.000Z",
+   "pass": "none",
+   "interactions": [
+    {
+     "method": "POST",
+     "url": "https://api.osv.dev/v1/querybatch",
+     "status": 200,
+     "bodySha256": "029f7982895cf18c00502b77855567407c46f8491cb4c8e0a5ef879803e0af4c",
+     "json": {
+      "results": [
+       {
+        "vulns": [
+         {
+          "id": "GHSA-2xpw-w6gg-jr37",
+          "modified": "2026-09-25T17:15:05.968189Z"
+         },
+         {
+          "id": "GHSA-34jh-p97f-mpxf",
+          "modified": "2026-09-10T03:50:14.811193Z"
+         },
+         {
+          "id": "GHSA-38jv-5279-wg99",
+          "modified": "2026-09-10T03:50:32.562010Z"
+         },
+         {
+          "id": "GHSA-g4mx-q9vg-27p4",
+          "modified": "2026-09-10T03:50:03.706889Z"
+         },
+         {
+          "id": "GHSA-gm62-xv2j-4w53",
+          "modified": "2026-09-10T03:50:58.741847Z"
+         },
+         {
+          "id": "GHSA-pq67-6m6q-mj2v",
+          "modified": "2026-09-10T03:50:25.299291Z"
+         },
+         {
+          "id": "GHSA-q2q7-5pp4-w6pg",
+          "modified": "2026-07-08T06:00:54.217433Z"
+         },
+         {
+          "id": "GHSA-qccp-gfcp-xxvc",
+          "modified": "2026-09-10T03:50:47.272765Z"
+         },
+         {
+          "id": "GHSA-v845-jxx5-vc9f",
+          "modified": "2026-09-10T03:49:24.753610Z"
+         },
+         {
+          "id": "GHSA-vxq7-64xx-v4gw",
+          "modified": "2026-10-01T17:55:57.514829Z"
+         },
+         {
+          "id": "PYSEC-2021-108",
+          "modified": "2026-10-13T09:30:02.842062Z"
+         },
+         {
+          "id": "PYSEC-2023-192",
+          "modified": "2023-11-08T04:13:33.452167Z"
+         },
+         {
+          "id": "PYSEC-2023-212",
+          "modified": "2023-11-08T04:13:39.165450Z"
+         },
+         {
+          "id": "PYSEC-2026-141",
+          "modified": "2026-05-20T09:19:20.983812Z"
+         },
+         {
+          "id": "PYSEC-2026-1994",
+          "modified": "2026-07-07T17:48:15.379954Z"
+         },
+         {
+          "id": "PYSEC-2026-1995",
+          "modified": "2026-07-07T17:48:15.400192Z"
+         },
+         {
+          "id": "PYSEC-2026-1996",
+          "modified": "2026-07-07T17:48:15.382053Z"
+         },
+         {
+          "id": "PYSEC-2026-1998",
+          "modified": "2026-07-07T17:47:54.140852Z"
+         },
+         {
+          "id": "PYSEC-2026-1999",
+          "modified": "2026-07-07T17:47:54.161376Z"
+         },
+         {
+          "id": "PYSEC-2026-4177",
+          "modified": "2026-10-01T17:45:18.336090Z"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "expect": {
+    "views": {
+     "cve_dependency_check('pypi', 'python://pypi.org/urllib3', '1.25.10', 'locked', NULL)": {
+      "rows": 1,
+      "contains": [
+       {
+        "ecosystem": "PyPI",
+        "package": "urllib3",
+        "version": "1.25.10",
+        "unchecked": null,
+        "advisories": [
+         "GHSA-2xpw-w6gg-jr37",
+         "GHSA-34jh-p97f-mpxf",
+         "GHSA-38jv-5279-wg99",
+         "GHSA-g4mx-q9vg-27p4",
+         "GHSA-gm62-xv2j-4w53",
+         "GHSA-pq67-6m6q-mj2v",
+         "GHSA-q2q7-5pp4-w6pg",
+         "GHSA-qccp-gfcp-xxvc",
+         "GHSA-v845-jxx5-vc9f",
+         "GHSA-vxq7-64xx-v4gw",
+         "PYSEC-2021-108",
+         "PYSEC-2023-192",
+         "PYSEC-2023-212",
+         "PYSEC-2026-141",
+         "PYSEC-2026-1994",
+         "PYSEC-2026-1995",
+         "PYSEC-2026-1996",
+         "PYSEC-2026-1998",
+         "PYSEC-2026-1999",
+         "PYSEC-2026-4177"
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a cargo dependency is asked of OSV as crates.io yaml-rust 0.4.5, and its advisories come back",
+   "clock": "2026-11-05T18:05:00.000Z",
+   "pass": "none",
+   "interactions": [
+    {
+     "method": "POST",
+     "url": "https://api.osv.dev/v1/querybatch",
+     "status": 200,
+     "bodySha256": "c6a6db737f4df7ab801ae38fb67f86ddee9c969e6084d6cca7092e4691fd95ef",
+     "json": {
+      "results": [
+       {
+        "vulns": [
+         {
+          "id": "RUSTSEC-2024-0320",
+          "modified": "2024-11-01T12:31:51Z"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "expect": {
+    "views": {
+     "cve_dependency_check('cargo', 'rust://crates.io/yaml-rust', '0.4.5', 'locked', NULL)": {
+      "rows": 1,
+      "contains": [
+       {
+        "ecosystem": "crates.io",
+        "package": "yaml-rust",
+        "version": "0.4.5",
+        "unchecked": null,
+        "advisories": [
+         "RUSTSEC-2024-0320"
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a gem dependency is asked of OSV as RubyGems addressable 2.8.0, and its advisories come back",
+   "clock": "2026-11-05T18:06:00.000Z",
+   "pass": "none",
+   "interactions": [
+    {
+     "method": "POST",
+     "url": "https://api.osv.dev/v1/querybatch",
+     "status": 200,
+     "bodySha256": "f1562a41258b19bdfb92887179e212030965bdf7e7d594aa9a2eeab30d37ca89",
+     "json": {
+      "results": [
+       {
+        "vulns": [
+         {
+          "id": "GHSA-539f-xcgw-2gjg",
+          "modified": "2026-11-12T23:00:05.606817Z"
+         },
+         {
+          "id": "GHSA-8gmh-2hhj-2hv9",
+          "modified": "2026-11-12T22:45:04.162582Z"
+         },
+         {
+          "id": "GHSA-9crm-g4mf-wc5j",
+          "modified": "2026-11-12T23:00:05.713087Z"
+         },
+         {
+          "id": "GHSA-9f42-57jx-vpp3",
+          "modified": "2026-11-12T22:45:04.068511Z"
+         },
+         {
+          "id": "GHSA-h27x-rffw-24p4",
+          "modified": "2026-09-10T03:51:01.804376Z"
+         },
+         {
+          "id": "GHSA-j82w-28jv-3pmj",
+          "modified": "2026-11-12T22:45:04.063599Z"
+         },
+         {
+          "id": "GHSA-qq38-m9mg-xjj5",
+          "modified": "2026-11-12T22:45:03.586718Z"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "expect": {
+    "views": {
+     "cve_dependency_check('gem', 'ruby-gem://rubygems.org/addressable', '2.8.0', 'locked', NULL)": {
+      "rows": 1,
+      "contains": [
+       {
+        "ecosystem": "RubyGems",
+        "package": "addressable",
+        "version": "2.8.0",
+        "unchecked": null,
+        "advisories": [
+         "GHSA-539f-xcgw-2gjg",
+         "GHSA-8gmh-2hhj-2hv9",
+         "GHSA-9crm-g4mf-wc5j",
+         "GHSA-9f42-57jx-vpp3",
+         "GHSA-h27x-rffw-24p4",
+         "GHSA-j82w-28jv-3pmj",
+         "GHSA-qq38-m9mg-xjj5"
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a composer dependency is asked of OSV as Packagist symfony/process v2.8.52, and its advisories come back",
+   "clock": "2026-11-05T18:07:00.000Z",
+   "pass": "none",
+   "interactions": [
+    {
+     "method": "POST",
+     "url": "https://api.osv.dev/v1/querybatch",
+     "status": 200,
+     "bodySha256": "267679c8ede7891361baebb58f00a1cff2c1b6e530e93422b457385f06870ee8",
+     "json": {
+      "results": [
+       {
+        "vulns": [
+         {
+          "id": "GHSA-qq5c-677p-737q",
+          "modified": "2026-09-10T03:50:21.051244Z"
+         },
+         {
+          "id": "GHSA-r39x-jcww-82v6",
+          "modified": "2026-09-10T03:50:59.252205Z"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "expect": {
+    "views": {
+     "cve_dependency_check('composer', 'composer://repo.packagist.org/symfony/process', 'v2.8.52', 'locked', NULL)": {
+      "rows": 1,
+      "contains": [
+       {
+        "ecosystem": "Packagist",
+        "package": "symfony/process",
+        "version": "v2.8.52",
+        "unchecked": null,
+        "advisories": [
+         "GHSA-qq5c-677p-737q",
+         "GHSA-r39x-jcww-82v6"
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a dependency that cannot be asked is not sent to OSV, and says why: a private registry's package, a requirement no file resolves, and a container image",
+   "clock": "2026-11-05T18:30:00Z",
+   "pass": "none",
+   "expect": {
+    "views": {
+     "cve_dependency_check('npm', 'npm://npm.pkg.github.com/@example/billing', '1.4.0', 'locked', NULL)": {
+      "rows": 1,
+      "contains": [
+       {
+        "unchecked": "not-the-public-registry",
+        "package": null,
+        "advisories": null
+       }
+      ]
+     },
+     "cve_dependency_check('cargo', 'unresolved://component/serde', '1.0.0', 'exact', NULL)": {
+      "rows": 1,
+      "contains": [
+       {
+        "unchecked": "not-the-public-registry",
+        "advisories": null
+       }
+      ]
+     },
+     "cve_dependency_check('npm', 'npm://registry.npmjs.org/yaml', NULL, 'range', '^2.8.2')": {
+      "rows": 1,
+      "contains": [
+       {
+        "unchecked": "no-version",
+        "advisories": null
+       }
+      ]
+     },
+     "cve_dependency_check('npm', NULL, NULL, 'not-installed', '^0.22.4')": {
+      "rows": 1,
+      "contains": [
+       {
+        "unchecked": "no-version",
+        "advisories": null
+       }
+      ]
+     },
+     "cve_dependency_check('nuget', 'nuget://nuget.org/Newtonsoft.Json', NULL, 'minimum', '(12.0.1, 13.0.0)')": {
+      "rows": 1,
+      "contains": [
+       {
+        "unchecked": "no-version",
+        "advisories": null
+       }
+      ]
+     },
+     "cve_dependency_check('oci', 'oci://docker.io/library/node', '22.23.4', 'exact', NULL)": {
+      "rows": 1,
+      "contains": [
+       {
+        "unchecked": "no-osv-ecosystem",
+        "advisories": null
+       }
+      ]
+     },
+     "cve_dependency_questions('*')": {
+      "rows": 0
+     },
+     "cve_dependency_findings('*')": {
+      "rows": 0
+     },
+     "cve_dependency_unchecked('*')": {
+      "rows": 0
      }
     }
    }
